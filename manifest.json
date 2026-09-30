@@ -1,0 +1,71 @@
+{
+  "name": "MachSoft Doğalgaz Kokulandırma SCADA",
+  "short_name": "Gas SCADA",
+  "description": "Endüstriyel Doğalgaz Kokulandırma & Telemetri Takip Portalı",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0c191f",
+  "theme_color": "#0c191f",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["business", "utilities", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Saha Canlı Durum",
+      "short_name": "Canlı",
+      "description": "Anlık debi, basınç ve pompa telemetrisi",
+      "url": "./index.html#live",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tüketim Analizi",
+      "short_name": "Tüketim",
+      "description": "24 saatlik tüketim ve vuruş analizi",
+      "url": "./index.html#consumption",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Raporlama & EPDK",
+      "short_name": "Raporlar",
+      "description": "Resmi denetim ve periyodik saha raporları",
+      "url": "./index.html#reports",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
