@@ -88,6 +88,29 @@
     .wa-notification {
       box-shadow: 0 20px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(34, 197, 94, 0.4);
     }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #modalEPDK:not(.hidden), #modalEPDK:not(.hidden) *,
+      #modalTechnicalReport:not(.hidden), #modalTechnicalReport:not(.hidden) * {
+        visibility: visible;
+      }
+      #modalEPDK:not(.hidden), #modalTechnicalReport:not(.hidden) {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: white !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+      button, .no-print {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-[#070e12] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-amber selection:text-black">
@@ -1013,10 +1036,11 @@
 
                 <!-- Toplam Tüketim -->
                 <div class="bg-brand-bg rounded-xl p-2.5 border border-brand-border">
-                  <div class="text-[10px] text-brand-textMuted">Toplam THT Tüketimi</div>
+                  <div class="text-[10px] text-brand-textMuted">Kayıtlı Enjeksiyon Tüketimi</div>
                   <div class="text-base font-extrabold text-white mt-0.5">
                     <span id="repTotalConsumption">15.567</span> <span class="text-[10px] font-normal text-brand-textDim">kg</span>
                   </div>
+                  <div class="text-[9px] text-emerald-400 font-mono mt-0.5">FIT-101 / Strok (Resmi)</div>
                 </div>
 
                 <!-- Ort. Enjeksiyon -->
@@ -1059,21 +1083,31 @@
                 </div>
               </div>
 
-              <!-- Tank Seviye Değişimi Raporu -->
+              <!-- Tank Seviye Değişimi & Enjeksiyon Tüketimi -->
               <div class="pt-2 border-t border-brand-border/50 space-y-1.5 text-xs">
-                <div class="text-[11px] font-bold text-white uppercase tracking-wider">Tank Hacim Değişimi (ΔL)</div>
+                <div class="flex items-center justify-between">
+                  <div class="text-[11px] font-bold text-white uppercase tracking-wider">Tank Seviye Değişimi (ΔL) vs Enjeksiyon</div>
+                  <span class="text-[9px] bg-brand-card text-brand-amber border border-brand-border px-1.5 py-0.5 rounded font-mono">İkmal/Dolum Ayrımı</span>
+                </div>
                 <div class="space-y-1 text-[11px]">
                   <div class="flex justify-between">
-                    <span class="text-brand-textMuted">Dönem Başı Seviye:</span>
+                    <span class="text-brand-textMuted">Kayıtlı Enjeksiyon Tüketimi:</span>
+                    <span id="repInjConsumption" class="font-bold text-emerald-400 font-mono">15.567 kg (Net Sarfiyat)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Dönem Başı Tank Seviyesi:</span>
                     <span id="repTankStart" class="font-bold text-white font-mono">1982.3 L</span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-brand-textMuted">Dönem Sonu Seviye:</span>
+                    <span class="text-brand-textMuted">Dönem Sonu Tank Seviyesi:</span>
                     <span id="repTankEnd" class="font-bold text-white font-mono">1968.4 L</span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-brand-textMuted">Net Hacimsel Değişim:</span>
-                    <span id="repTankDelta" class="font-bold text-rose-400 font-mono">-13.9 L (Tüketilen)</span>
+                    <span class="text-brand-textMuted">Tank Seviye Değişimi:</span>
+                    <span id="repTankDelta" class="font-bold text-rose-400 font-mono">-13.9 L (Brüt Fark)</span>
+                  </div>
+                  <div class="p-1.5 rounded bg-brand-card/60 border border-brand-border/60 text-[9px] text-brand-textDim mt-1 leading-normal">
+                    ℹ️ <em>Tank dolumu/ikmal yapıldığında seviye artış gösterebilir; resmi ve kesin tüketim FIT-101 flowmetre ve strok sayacından kayıt alınan Enjeksiyon miktarıdır.</em>
                   </div>
                 </div>
               </div>
@@ -1735,8 +1769,9 @@
             <span class="font-bold text-slate-900 text-xs" id="epdkTotalGas">68.520 m³</span>
           </div>
           <div>
-            <span class="text-slate-500 text-[9px] block">Seçili Dönem Tüketimi</span>
-            <span class="font-bold text-slate-900 text-xs" id="epdkTotalConsumption">15.567 kg</span>
+            <span class="text-slate-500 text-[9px] block">Kayıtlı Enjeksiyon Tüketimi</span>
+            <span class="font-bold text-slate-900 text-xs font-mono" id="epdkTotalConsumption">15.567 kg</span>
+            <span class="text-[8px] text-emerald-700 block font-mono">FIT-101 / Strok (Resmi)</span>
           </div>
           <div>
             <span class="text-slate-500 text-[9px] block">Ort. Konsantrasyon</span>
@@ -1759,8 +1794,9 @@
             <strong class="text-slate-700" id="epdkP2Strokes">274 Strok</strong>
           </div>
           <div>
-            <span class="text-slate-500 block">Tank Hacim Değişimi:</span>
+            <span class="text-slate-500 block">Tank Seviye Değişimi:</span>
             <strong class="text-rose-600" id="epdkTankDelta">-15.6 L</strong>
+            <span class="text-[8px] text-slate-400 block font-sans">(Brüt Seviye)</span>
           </div>
         </div>
 
@@ -1771,6 +1807,11 @@
           <p class="text-emerald-700 text-[10px] leading-relaxed">
             İncelenen dönem (<span id="epdkRangeSpan" class="font-semibold text-emerald-950">01.09.2026 - 08.09.2026</span>) boyunca kokulandırma konsantrasyonu TS EN ISO 13734 ve EPDK sınırları (10 - 20 mg/Nm³) içerisinde %99.8 süreyle kalmış olup herhangi bir koku kesintisi yaşanmamıştır.
           </p>
+        </div>
+
+        <!-- Ölçüm Esası Notu -->
+        <div class="text-[9px] text-slate-500 italic bg-white p-2 rounded-xl border border-slate-200 leading-normal">
+          <strong>* Resmi Denetim Esası:</strong> Tank seviye değişimi ara ikmal/dolum durumlarında net tüketimi doğrudan yansıtmayabilir (dolum esnasında seviye artar). EPDK denetim ve resmi tüketim tespitinde FIT-101 Coriolis debimetresi ve pompa strok sayacından kayıt altına alınan <strong>Enjeksiyon Tüketim Miktarı</strong> esas alınır.
         </div>
 
         <div class="pt-3 border-t border-slate-200 flex justify-between items-end">
@@ -1800,7 +1841,7 @@
   <!-- MODAL 6: DETAYLI PERİYODİK TÜKETİM & SAHA RAPORU -->
   <!-- ============================================== -->
   <div id="modalTechnicalReport" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
-    <div class="bg-white text-slate-900 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl font-sans">
+    <div class="bg-white text-slate-900 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl font-sans">
       <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div class="flex items-center gap-2">
           <span class="text-sky-600 font-bold text-base">📑</span>
@@ -1833,20 +1874,24 @@
         <!-- 1. Tüketim & Strok Özeti -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-3 rounded-xl border border-slate-200 text-center shadow-sm">
           <div>
-            <span class="text-slate-500 text-[10px] block">Seçili Dönem Tüketimi</span>
+            <span class="text-slate-500 text-[10px] block">Kayıtlı Enjeksiyon Tüketimi</span>
             <span class="font-bold text-slate-900 text-sm font-mono" id="techRepConsumption">15.567 kg</span>
+            <span class="text-[9px] text-emerald-700 block font-semibold">FIT-101 / Strok (Resmi)</span>
           </div>
           <div>
             <span class="text-slate-500 text-[10px] block">Dönem Toplam Vuruş</span>
             <span class="font-bold text-emerald-600 text-sm font-mono" id="techRepTotalStrokes">831 Strok</span>
+            <span class="text-[9px] text-slate-400 block font-sans">P-101A + P-101B Toplam</span>
           </div>
           <div>
             <span class="text-slate-500 text-[10px] block">Toplam Dağıtılan Gaz</span>
             <span class="font-bold text-slate-900 text-sm font-mono" id="techRepGas">68.520 m³</span>
+            <span class="text-[9px] text-slate-400 block font-sans">Korentör Ölçümü</span>
           </div>
           <div>
             <span class="text-slate-500 text-[10px] block">Ort. Dozaj Konsantrasyonu</span>
             <span class="font-bold text-sky-600 text-sm font-mono" id="techRepConc">12.04 mg/m³</span>
+            <span class="text-[9px] text-slate-400 block font-sans">Hedef: 12.00 mg/m³</span>
           </div>
         </div>
 
@@ -1871,41 +1916,52 @@
             </div>
           </div>
 
-          <!-- Tank Hareketleri -->
+          <!-- Tank Hareketleri & Enjeksiyon Tüketimi Karşılaştırması -->
           <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5 text-xs shadow-sm">
-            <span class="font-bold text-slate-900 block text-[11px] uppercase tracking-wider">Tank Hareketleri (TK-101)</span>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-900 block text-[11px] uppercase tracking-wider">Tank Hacim Hareketleri (TK-101)</span>
+              <span class="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded font-bold font-sans">İkmal/Dolum Ayrımı</span>
+            </div>
             <div class="space-y-1.5 text-[11px] font-mono">
               <div class="flex justify-between">
-                <span class="text-slate-600">Dönem Başı Seviyesi:</span>
+                <span class="text-slate-600">Dönem Başı Tank Seviyesi:</span>
                 <strong class="text-slate-900" id="techRepTankStart">1982.3 L</strong>
               </div>
               <div class="flex justify-between">
-                <span class="text-slate-600">Dönem Sonu Seviyesi:</span>
+                <span class="text-slate-600">Dönem Sonu Tank Seviyesi:</span>
                 <strong class="text-slate-900" id="techRepTankEnd">1968.4 L</strong>
               </div>
-              <div class="flex justify-between pt-1 border-t border-slate-100">
-                <span class="text-slate-600">Net Tank Hacim Değişimi:</span>
-                <strong class="text-rose-600" id="techRepTankDelta">-15.6 L (Tüketilen)</strong>
+              <div class="flex justify-between">
+                <span class="text-slate-600">Tank Seviye Değişimi:</span>
+                <strong class="text-rose-600" id="techRepTankDelta">-15.6 L (Brüt Fark)</strong>
+              </div>
+              <div class="flex justify-between pt-1 border-t border-slate-100 bg-emerald-50/70 p-1.5 rounded text-emerald-950 font-bold">
+                <span class="text-slate-700">Kayıtlı Enjeksiyon Tüketimi:</span>
+                <span id="techRepInjDiff" class="text-emerald-700">15.567 kg (Ölçülen Tüketim)</span>
+              </div>
+              <div class="text-[9px] text-slate-500 italic leading-tight pt-0.5 font-sans">
+                * İkaz: Tank dolumu/ikmali gerçekleştiğinde tank seviyesi artar. Resmi sarfiyat ölçümlerinde tank seviye farkı yerine daima FIT-101 debimetresi ve strok sayacının kayıtlı enjeksiyon verisi esas alınır.
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 3. Saatlik / Günlük Dağılım Tablosu (Kullanıcı kuralı: günlük rapor değilse saat aralığı çıkmasın) -->
+        <!-- 3. Saatlik / Günlük Dağılım Tablosu -->
         <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5 shadow-sm">
           <div class="flex justify-between items-center">
             <span class="font-bold text-slate-900 text-xs block" id="techRepTableTitle">Dönemsel Günlük Dağılım Tablosu</span>
-            <span class="text-[9px] text-slate-500 font-mono" id="techRepTableSubtitle">Günlük Özet Döküm</span>
+            <span class="text-[9px] text-slate-500 font-mono" id="techRepTableSubtitle">Tarih Bazlı Tüketim & Strok Kaydı</span>
           </div>
-          <div class="overflow-x-auto">
+          <div class="overflow-x-auto max-h-80 overflow-y-auto">
             <table class="w-full text-left text-[10px] font-mono">
-              <thead class="border-b border-slate-200 text-slate-500">
+              <thead class="border-b border-slate-200 text-slate-500 sticky top-0 bg-white shadow-xs">
                 <tr id="techRepTableHeadRow">
-                  <th class="py-1">Tarih</th>
-                  <th class="py-1">Dağıtılan Gaz (m³)</th>
-                  <th class="py-1">Tüketim (kg)</th>
-                  <th class="py-1">Strok Adedi</th>
-                  <th class="py-1 text-right">Ortalama Dozaj (mg/m³)</th>
+                  <th class="py-1.5 px-2">Tarih</th>
+                  <th class="py-1.5 px-2">Dağıtılan Gaz (m³)</th>
+                  <th class="py-1.5 px-2 text-emerald-800">Kayıtlı Enjeksiyon Tüketimi (kg)</th>
+                  <th class="py-1.5 px-2">Strok Adedi</th>
+                  <th class="py-1.5 px-2 text-slate-600">Tank Seviye Değişimi (L)</th>
+                  <th class="py-1.5 px-2 text-right">Ortalama Dozaj (mg/m³)</th>
                 </tr>
               </thead>
               <tbody id="techRepTableBody" class="divide-y divide-slate-100">
@@ -2723,6 +2779,8 @@
       // 1. UPDATE TAB REPORT UI
       document.getElementById('repTotalGas').innerText = totalGas.toLocaleString('tr-TR');
       document.getElementById('repTotalConsumption').innerText = totalConsumption.toFixed(3);
+      const repInj = document.getElementById('repInjConsumption');
+      if (repInj) repInj.innerText = `${totalConsumption.toFixed(3)} kg (Net Sarfiyat)`;
       document.getElementById('repAvgInj').innerText = avgStrokeGr.toFixed(2);
       document.getElementById('repTotalAlarm').innerText = totalAlarms;
 
@@ -2733,7 +2791,7 @@
 
       document.getElementById('repTankStart').innerText = `${tankStartL} L`;
       document.getElementById('repTankEnd').innerText = `${tankEndL} L`;
-      document.getElementById('repTankDelta').innerText = `-${tankConsumedL} L (Tüketilen)`;
+      document.getElementById('repTankDelta').innerText = `-${tankConsumedL} L (Brüt Fark)`;
 
       document.getElementById('repCriticalAlarms').innerText = criticalAlarms;
       document.getElementById('repWarningAlarms').innerText = warningAlarms;
@@ -2790,83 +2848,163 @@
       const techTEnd = document.getElementById('techRepTankEnd');
       if (techTEnd) techTEnd.innerText = `${tankEndL} L`;
       const techTDelta = document.getElementById('techRepTankDelta');
-      if (techTDelta) techTDelta.innerText = `-${tankConsumedL} L (Tüketilen)`;
+      if (techTDelta) techTDelta.innerText = `-${tankConsumedL} L (Brüt Fark)`;
+      const techInjDiff = document.getElementById('techRepInjDiff');
+      if (techInjDiff) techInjDiff.innerText = `${totalConsumption.toFixed(3)} kg (Ölçülen Tüketim)`;
 
       // 4. GENERATE DYNAMIC TABLE IN TECHNICAL REPORT
-      // Kullanıcı kuralı: Günlük rapor değilse saat aralıkları çıkmasın!
-      const isDaily = diffHours <= 24;
+      // Kural: Bugünün raporu ise saat dilimleri (24 saat) listelenebilir.
+      // Kullanıcı kafasına göre tarih seçtiğinde ise saat aralıkları YOKTUR; o tarihteki (gün gün) tüketimler listelenir!
+      const isSameDay = dStart.getFullYear() === dEnd.getFullYear() && 
+                        dStart.getMonth() === dEnd.getMonth() && 
+                        dStart.getDate() === dEnd.getDate();
+      const isDaily = (state.reports.currentFilter === 'bugun') || isSameDay || (diffHours <= 24 && diffDays <= 1);
+
       const tableTitle = document.getElementById('techRepTableTitle');
       const tableSub = document.getElementById('techRepTableSubtitle');
       const tableHead = document.getElementById('techRepTableHeadRow');
       const tableBody = document.getElementById('techRepTableBody');
 
       if (isDaily) {
-        if (tableTitle) tableTitle.innerText = 'Günün Saatlik Sarfiyat Dağılımı';
-        if (tableSub) tableSub.innerText = '1 Saatlik Dilimler';
+        // BUGÜNÜN RAPORU: 24 Saatlik Saat Dilimleri
+        if (tableTitle) tableTitle.innerText = `Günün Saatlik Sarfiyat Dağılımı (${fmtDateOnly(dStart)})`;
+        if (tableSub) tableSub.innerText = '1 Saatlik Dilimler Bazında Enjeksiyon ve Akış Kayıtları (24 Saat)';
         if (tableHead) {
           tableHead.innerHTML = `
-            <th class="py-1">Saat Dilimi</th>
-            <th class="py-1">Gaz Akışı (m³/h)</th>
-            <th class="py-1">Tüketim (kg)</th>
-            <th class="py-1">Strok Adedi</th>
-            <th class="py-1 text-right">Dozaj (mg/m³)</th>
+            <th class="py-1.5 px-2">Saat Dilimi</th>
+            <th class="py-1.5 px-2">Gaz Akışı (m³/h)</th>
+            <th class="py-1.5 px-2 text-emerald-800">Kayıtlı Enjeksiyon (kg)</th>
+            <th class="py-1.5 px-2">Strok Adedi</th>
+            <th class="py-1.5 px-2 text-slate-600">Tank Seviye Farkı (L)</th>
+            <th class="py-1.5 px-2 text-right">Ortalama Dozaj (mg/m³)</th>
           `;
         }
+
         if (tableBody) {
           let rowsHtml = '';
-          const rowCount = Math.min(8, Math.max(4, Math.round(diffHours / 3)));
-          for (let i = 0; i < rowCount; i++) {
-            const hStart = pad(Math.floor((i * 24) / rowCount));
-            const hEnd = pad(Math.floor(((i + 1) * 24) / rowCount));
-            const rowGas = Math.round(totalGas / rowCount);
-            const rowCons = (totalConsumption / rowCount).toFixed(3);
-            const rowStrokes = Math.round(totalPeriodStrokes / rowCount);
-            const rowConc = (11.9 + (i % 3) * 0.1).toFixed(1);
+          const hourSlots = 24;
+          const hourWeights = [
+            0.5, 0.45, 0.45, 0.45, 0.5, 0.7, // 00-06 (gece taban)
+            1.2, 1.4, 1.5, 1.4, 1.3, 1.2,    // 06-12 (sabah pik)
+            1.1, 1.2, 1.3, 1.4, 1.5, 1.4,    // 12-18 (öğle/ikindi)
+            1.5, 1.4, 1.2, 1.0, 0.8, 0.6     // 18-24 (akşam pik/düşüş)
+          ];
+          const totalHW = hourWeights.reduce((a, b) => a + b, 0);
+
+          for (let h = 0; h < hourSlots; h++) {
+            const hStartStr = pad(h) + ':00';
+            const hEndStr = pad((h + 1) % 24 === 0 ? 0 : h + 1) + ':00';
+            const w = hourWeights[h] / totalHW;
+            const rowGas = Math.round(totalGas * w);
+            const rowCons = parseFloat((totalConsumption * w).toFixed(4));
+            const rowStrokes = Math.max(1, Math.round(totalPeriodStrokes * w));
+            const rowTank = parseFloat((tankConsumedL * w).toFixed(2));
+            const rowConc = (rowGas > 0 ? (rowCons * 1000000 / rowGas) : 12.0).toFixed(2);
+
             rowsHtml += `
-              <tr class="${i === rowCount - 1 ? 'font-bold text-slate-900 bg-slate-50' : ''}">
-                <td class="py-1">${hStart}:00 - ${hEnd}:00</td>
-                <td>${rowGas.toLocaleString('tr-TR')}</td>
-                <td>${rowCons}</td>
-                <td>${rowStrokes}</td>
-                <td class="text-right">${rowConc}</td>
+              <tr class="hover:bg-slate-50 transition ${h % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}">
+                <td class="py-1.5 px-2 font-bold text-slate-800">${hStartStr} - ${hEndStr}</td>
+                <td class="py-1.5 px-2">${rowGas.toLocaleString('tr-TR')}</td>
+                <td class="py-1.5 px-2 font-bold text-emerald-700">${rowCons.toFixed(3)}</td>
+                <td class="py-1.5 px-2">${rowStrokes}</td>
+                <td class="py-1.5 px-2 text-rose-600">-${rowTank.toFixed(2)}</td>
+                <td class="py-1.5 px-2 text-right font-semibold text-slate-700">${rowConc}</td>
               </tr>
             `;
           }
+
+          rowsHtml += `
+            <tr class="font-extrabold text-slate-900 bg-slate-100 border-t-2 border-slate-300">
+              <td class="py-2 px-2 text-slate-950">GÜN TOPLAMI (24 Saat)</td>
+              <td class="py-2 px-2 text-slate-950">${totalGas.toLocaleString('tr-TR')} m³</td>
+              <td class="py-2 px-2 text-emerald-800">${totalConsumption.toFixed(3)} kg</td>
+              <td class="py-2 px-2 text-slate-950">${totalPeriodStrokes.toLocaleString('tr-TR')}</td>
+              <td class="py-2 px-2 text-rose-700">-${tankConsumedL.toFixed(1)} L</td>
+              <td class="py-2 px-2 text-right text-sky-800">${state.concentration.toFixed(2)} mg/m³</td>
+            </tr>
+          `;
           tableBody.innerHTML = rowsHtml;
         }
+
       } else {
-        // Günlük rapor DEĞİLSE: Saat aralıkları ÇIKMASIN, takvim günleri çıksın!
-        if (tableTitle) tableTitle.innerText = 'Dönemsel Günlük Dağılım Tablosu';
-        if (tableSub) tableSub.innerText = 'Günlük Takvim Dökümü';
+        // KULLANICI KAFASINA GÖRE TARİH SEÇTİĞİ ZAMAN:
+        // Saat aralıkları YOKTUR! Seçilen tarih aralığındaki her bir gün takvim sırasıyla listelenir.
+        if (tableTitle) tableTitle.innerText = `Seçili Dönem Günlük Tüketim Çizelgesi (${rangeStr})`;
+        if (tableSub) tableSub.innerText = 'Tarih Bazlı Kayıtlı Enjeksiyon Tüketimi & Tank Seviye Değişimi Dökümü';
         if (tableHead) {
           tableHead.innerHTML = `
-            <th class="py-1">Tarih</th>
-            <th class="py-1">Dağıtılan Gaz (m³)</th>
-            <th class="py-1">Tüketim (kg)</th>
-            <th class="py-1">Strok Adedi</th>
-            <th class="py-1 text-right">Ortalama Dozaj (mg/m³)</th>
+            <th class="py-1.5 px-2">Tarih</th>
+            <th class="py-1.5 px-2">Dağıtılan Gaz (m³)</th>
+            <th class="py-1.5 px-2 text-emerald-800">Kayıtlı Enjeksiyon Tüketimi (kg)</th>
+            <th class="py-1.5 px-2">Strok Adedi</th>
+            <th class="py-1.5 px-2 text-slate-600">Tank Seviye Değişimi (L)</th>
+            <th class="py-1.5 px-2 text-right">Ortalama Dozaj (mg/m³)</th>
           `;
         }
+
         if (tableBody) {
+          // Seçili başlangıç ve bitiş arasındaki tüm takvim günlerini oluştur
+          const days = [];
+          let dCur = new Date(dStart.getFullYear(), dStart.getMonth(), dStart.getDate());
+          const dLast = new Date(dEnd.getFullYear(), dEnd.getMonth(), dEnd.getDate());
+
+          while (dCur <= dLast) {
+            days.push(new Date(dCur));
+            dCur.setDate(dCur.getDate() + 1);
+          }
+
+          const dayCount = Math.max(1, days.length);
+          const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+
+          // Hafta içi / hafta sonu hafif dinamik ağırlıklandırma
+          const dayWeights = days.map((d, idx) => {
+            const dayOfWeek = d.getDay();
+            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            const base = isWeekend ? 0.90 : 1.04;
+            const variance = 1 + (((idx * 7 + d.getDate()) % 9) - 4) * 0.015;
+            return base * variance;
+          });
+          const totalDW = dayWeights.reduce((a, b) => a + b, 0);
+
           let rowsHtml = '';
-          const dayCount = Math.min(10, Math.max(2, Math.round(diffDays)));
           for (let i = 0; i < dayCount; i++) {
-            const rowDate = new Date(dStart.getTime() + (diffMs * (i / (dayCount - 1 || 1))));
-            const rowDateStr = fmtDateOnly(rowDate);
-            const rowGas = Math.round(totalGas / dayCount);
-            const rowCons = (totalConsumption / dayCount).toFixed(3);
-            const rowStrokes = Math.round(totalPeriodStrokes / dayCount);
-            const rowConc = (11.9 + (i % 3) * 0.1).toFixed(1);
+            const dateObj = days[i];
+            const dateStr = fmtDateOnly(dateObj);
+            const dayName = dayNames[dateObj.getDay()];
+            const w = dayWeights[i] / totalDW;
+
+            const rowGas = Math.round(totalGas * w);
+            const rowCons = parseFloat((totalConsumption * w).toFixed(3));
+            const rowStrokes = Math.round(totalPeriodStrokes * w);
+            const rowTank = parseFloat((tankConsumedL * w).toFixed(1));
+            const rowConc = (rowGas > 0 ? (rowCons * 1000000 / rowGas) : 12.0).toFixed(2);
+
             rowsHtml += `
-              <tr class="${i === dayCount - 1 ? 'font-bold text-slate-900 bg-slate-50' : ''}">
-                <td class="py-1">${rowDateStr}</td>
-                <td>${rowGas.toLocaleString('tr-TR')}</td>
-                <td>${rowCons}</td>
-                <td>${rowStrokes}</td>
-                <td class="text-right">${rowConc}</td>
+              <tr class="hover:bg-slate-50 transition ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}">
+                <td class="py-1.5 px-2 font-bold text-slate-800">
+                  <span>${dateStr}</span>
+                  <span class="text-[9px] text-slate-400 font-sans font-normal ml-1">(${dayName})</span>
+                </td>
+                <td class="py-1.5 px-2">${rowGas.toLocaleString('tr-TR')}</td>
+                <td class="py-1.5 px-2 font-bold text-emerald-700">${rowCons.toFixed(3)} kg</td>
+                <td class="py-1.5 px-2">${rowStrokes.toLocaleString('tr-TR')}</td>
+                <td class="py-1.5 px-2 text-rose-600 font-mono">-${rowTank.toFixed(1)} L</td>
+                <td class="py-1.5 px-2 text-right font-semibold text-slate-700">${rowConc}</td>
               </tr>
             `;
           }
+
+          // Toplam Özeti Satırı
+          rowsHtml += `
+            <tr class="font-extrabold text-slate-900 bg-slate-100 border-t-2 border-slate-300">
+              <td class="py-2 px-2 text-slate-950">DÖNEM TOPLAMI (${dayCount} Gün)</td>
+              <td class="py-2 px-2 text-slate-950">${totalGas.toLocaleString('tr-TR')} m³</td>
+              <td class="py-2 px-2 text-emerald-800">${totalConsumption.toFixed(3)} kg</td>
+              <td class="py-2 px-2 text-slate-950">${totalPeriodStrokes.toLocaleString('tr-TR')}</td>
+              <td class="py-2 px-2 text-rose-700">-${tankConsumedL.toFixed(1)} L</td>
+              <td class="py-2 px-2 text-right text-sky-800">${state.concentration.toFixed(2)} mg/m³</td>
+            </tr>
+          `;
           tableBody.innerHTML = rowsHtml;
         }
       }
