@@ -717,8 +717,8 @@
                   <div class="flex items-center space-x-2.5">
                     <span class="text-rose-500 font-extrabold text-base leading-none">!</span>
                     <div>
-                      <span class="text-xs font-bold text-slate-100 block">ALM-101: Pompa 1 Düşük Dozaj Uyarısı &bull; Kritik</span>
-                      <span class="text-[10px] text-rose-300">FM ölçümü 0 gr/strk seviyesine indi, körük ve emiş hattı kontrolü gerekli</span>
+                      <span class="text-xs font-bold text-slate-100 block">ALM-101: Pompa 1 Dozaj Akış Kaybı &bull; Kritik</span>
+                      <span class="text-[10px] text-rose-300">FM ölçümü 0 gr/strk. Pompada hava var ya da körük arızalı olabilir, kontrol ediniz. (Havası alındığı halde düzelmiyorsa körük arızası geçerlidir).</span>
                     </div>
                   </div>
                   <div class="text-right">
@@ -1288,7 +1288,7 @@
         <span>🚨 [ACİL UYARI]</span> <span id="waStationTitle">İZMİRGAZ SAHA 01 - Bornova</span>
       </div>
       <p id="waMsgText" class="text-[11px] text-slate-200 leading-snug">
-        Pompa 1 akış kesintisi algılandı! Pompa 2 otomatik olarak devreye alındı. Nöbetçi operatör teyidi bekleniyor.
+        Pompa 1 akış kaybı! Pompada hava var ya da körük arızalı olabilir, kontrol ediniz. Pompa 2 otomatik devreye alındı.
       </p>
     </div>
     <div class="mt-2.5 pt-2 border-t border-white/10 flex gap-2">
@@ -1457,9 +1457,9 @@
               <span class="text-brand-textMuted">Akış Geri Bildirim Durumu:</span>
               <span class="font-mono text-emerald-300">Normal (FM Birim Ölçüm: 18.76 gr/strk)</span>
             </div>
-            <div class="flex justify-between py-1.5">
-              <span class="text-brand-textMuted">Dozaj Arıza Algılama:</span>
-              <span class="text-brand-textDim text-[10px]">Strok vuruşu gerçekleştiğinde FM ölçümü 0,5 gr altına düşerse sistem 'Körük Yırtılması / Akış Kaybı' arızası üretir.</span>
+            <div class="flex justify-between py-1.5 items-start gap-3">
+              <span class="text-brand-textMuted shrink-0">Dozaj Arıza Algılama:</span>
+              <span class="text-brand-textDim text-[10px] text-right">Strok vuruşunda FM ölçümü 0,5 gr altında kalıyorsa: Pompada hava var ya da körük arızalı olabilir, kontrol ediniz. Sistemin havası alındığı halde dozaj akışı başlamıyorsa körük/diyafram hasarı geçerlidir.</span>
             </div>
           </div>
         </div>
@@ -2310,7 +2310,7 @@
       playBeep(880, 'sawtooth', 0.25);
       setTimeout(() => playBeep(880, 'sawtooth', 0.25), 300);
 
-      triggerWaNotification(state.currentStation, 'ALM-101: Pompa 1 akış kaybı algılandı! Pompa 2 otomatik devreye alındı.');
+      triggerWaNotification(state.currentStation, 'ALM-101: Pompa 1 akış kaybı! Pompada hava var ya da körük arızalı olabilir, kontrol ediniz. Pompa 2 otomatik devreye alındı.');
 
       updateUI();
       showToast('KRİTİK ALARM: Pompa 1 debi kaybı! Pompa 2 devreye girdi.', '🚨');
