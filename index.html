@@ -1,0 +1,2880 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MachSoft ODORMACH - Doğalgaz Kokulandırma SCADA & Telemetri</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for trends -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#0c191f',
+              surface: '#12242c',
+              card: '#162d38',
+              cardHover: '#1c3947',
+              border: '#204150',
+              borderLight: '#2a5568',
+              amber: '#f5a623',
+              amberDark: '#d98c16',
+              green: '#22c55e',
+              greenGlow: 'rgba(34, 197, 94, 0.25)',
+              textPrimary: '#f1f5f9',
+              textMuted: '#8da2ac',
+              textDim: '#5d7682',
+              danger: '#ef4444',
+              dangerBg: 'rgba(239, 68, 68, 0.1)',
+              warning: '#f59e0b',
+              warningBg: 'rgba(245, 158, 11, 0.1)',
+              info: '#38bdf8'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0c191f; }
+    ::-webkit-scrollbar-thumb { background: #204150; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a5568; }
+
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.06); }
+    }
+    .animate-pulse-subtle { animation: pulse-subtle 2s infinite ease-in-out; }
+
+    @keyframes flow {
+      0% { stroke-dashoffset: 24; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .flow-line {
+      stroke-dasharray: 6, 6;
+      animation: flow 1.2s linear infinite;
+    }
+
+    /* Mobile phone mockup frame */
+    .phone-mockup {
+      width: 425px;
+      height: 890px;
+      border-radius: 44px;
+      border: 11px solid #1e293b;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    @media (max-width: 640px) {
+      .phone-mockup {
+        width: 100% !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
+
+    .wa-notification {
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(34, 197, 94, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-[#070e12] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-amber selection:text-black">
+
+  <!-- ============================================== -->
+  <!-- TOP GLOBAL DEMO TOOLBAR & WOW MODULES -->
+  <!-- ============================================== -->
+  <header class="bg-[#0b161b] border-b border-brand-border px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between text-xs sm:text-sm z-30 sticky top-0 shadow-md">
+    <div class="flex items-center space-x-2 sm:space-x-3">
+      <!-- MachSoft Official Logo Integration -->
+      <div class="flex items-center space-x-2 bg-black/60 px-2 py-1 rounded-lg border border-white/10">
+        <img src="assets/machsoft-logo.jpg" alt="MachSoft Logo" class="h-6 object-contain rounded" onerror="this.style.display='none'">
+        <div class="border-l border-brand-border pl-2">
+          <span class="font-bold text-white tracking-wide text-xs sm:text-sm">ODORMACH</span>
+          <span class="text-brand-amber font-mono text-[10px] ml-1">SCADA</span>
+        </div>
+      </div>
+      <span class="bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded text-[11px] font-medium hidden sm:flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> TELEMETRİ CANLI
+      </span>
+    </div>
+
+    <!-- WOW Feature Launchers & Navigation Buttons -->
+    <div class="flex items-center space-x-1.5 sm:space-x-2 mt-1 sm:mt-0">
+      <!-- 1. GIS Filo Haritası -->
+      <button onclick="openModal('modalGIS')" class="bg-brand-surface hover:bg-brand-card border border-brand-border text-slate-200 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow hover:border-brand-amber/50">
+        <span>🗺️</span> <span class="hidden sm:inline">GIS Filo</span>
+      </button>
+
+      <!-- 2. Kestirimci Bakım & Körük Modülü -->
+      <button onclick="openModal('modalAI')" class="bg-brand-surface hover:bg-brand-card border border-brand-border text-emerald-400 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow hover:border-emerald-500/50">
+        <span>🤖</span> <span class="hidden sm:inline">Kestirimci Bakım</span>
+      </button>
+
+      <!-- 3. 3D Skid Konteyner İkizi -->
+      <button onclick="openModal('modalSkid')" class="bg-brand-surface hover:bg-brand-card border border-brand-border text-sky-400 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow hover:border-sky-500/50">
+        <span>🏭</span> <span class="hidden sm:inline">3D Skid İkiz</span>
+      </button>
+
+      <!-- 4. Koku Ölçümü Kaydı (Eski Burun Testi) -->
+      <button onclick="openModal('modalSniff')" class="bg-brand-surface hover:bg-brand-card border border-brand-border text-amber-300 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow hover:border-amber-400/50">
+        <span>👃</span> <span class="hidden sm:inline">Koku Ölçümü</span>
+      </button>
+
+      <!-- Master Gate Lock / Unlock Test Button -->
+      <button onclick="lockToMasterGate()" title="Güvenlik Girişini Kilitle / Test Et" class="bg-brand-surface hover:bg-rose-950/60 border border-brand-border text-rose-300 px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow">
+        <span>🔒</span>
+      </button>
+
+      <!-- 10x Fast Simulation Speed Mode -->
+      <button id="btnFastSpeed" onclick="toggleFastSpeed()" class="bg-brand-surface hover:bg-brand-card border border-brand-border text-slate-300 px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow">
+        <span id="fastSpeedText">1x</span>
+      </button>
+
+      <!-- Device View Toggle -->
+      <div class="bg-brand-surface border border-brand-border rounded-lg p-0.5 flex text-xs">
+        <button id="btnViewMobile" onclick="setViewMode('mobile')" class="px-2 py-1 rounded font-medium transition-all bg-brand-amber text-slate-950 shadow">
+          📱 Mobil
+        </button>
+        <button id="btnViewDesktop" onclick="setViewMode('desktop')" class="px-2 py-1 rounded font-medium text-brand-textMuted hover:text-white transition-all">
+          🖥️ Geniş
+        </button>
+      </div>
+
+      <!-- Quick Simulator Drawer Toggle -->
+      <button onclick="toggleSimulator()" class="bg-brand-card hover:bg-brand-cardHover border border-brand-amber/50 text-brand-amber px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors shadow">
+        <span>⚙️</span>
+        <span class="hidden sm:inline">Simülatör</span>
+      </button>
+    </div>
+  </header>
+
+
+  <!-- ============================================== -->
+  <!-- MAIN APP CONTAINER -->
+  <!-- ============================================== -->
+  <main class="flex-1 flex items-center justify-center p-0 sm:p-4 md:p-6 overflow-hidden relative">
+
+    <!-- WRAPPER: Mobile Phone Mockup or Desktop SCADA -->
+    <div id="appContainer" class="phone-mockup bg-brand-bg flex flex-col transition-all duration-300">
+      
+      <!-- Top Simulated Phone Status Bar -->
+      <div id="simulatedStatusBar" class="h-8 bg-brand-bg px-5 pt-1.5 flex justify-between items-center text-[11px] text-brand-textMuted select-none shrink-0 z-20 border-b border-white/5">
+        <span id="statusBarClock" class="font-semibold text-slate-200">20:28</span>
+        <div class="flex items-center space-x-1.5">
+          <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 21l3.54-.93C9.33 20.65 10.63 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg>
+          <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.393 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+          <span class="text-[10px] font-bold text-slate-300">4.5G</span>
+          <div class="w-5 h-2.5 border border-slate-400 rounded-sm p-0.5 flex items-center">
+            <div class="h-full bg-emerald-400 w-3/4 rounded-2xs"></div>
+          </div>
+          <span class="text-[10px] font-bold text-slate-300">72</span>
+        </div>
+      </div>
+
+      <!-- SCROLLABLE VIEWPORT -->
+      <div id="appViewport" class="flex-1 overflow-y-auto flex flex-col relative">
+
+        <!-- ============================================== -->
+        <!-- SCREEN -1: MASTER ACCESS GATEKEEPER (Sayfa 1: Şifre Ekranı) -->
+        <!-- ============================================== -->
+        <div id="screenMasterGate" class="p-6 flex-1 flex flex-col justify-between items-center text-center bg-gradient-to-b from-[#0b171d] via-brand-bg to-[#071015]">
+          <div class="w-full max-w-xs my-auto space-y-6">
+            <!-- MachSoft Brand Header -->
+            <div class="flex flex-col items-center space-y-3">
+              <div class="p-3 bg-black/70 rounded-2xl border border-brand-border/60 shadow-xl inline-block">
+                <img src="assets/machsoft-logo.jpg" alt="MachSoft" class="h-10 object-contain mx-auto" onerror="this.parentElement.innerHTML='<span class=\'text-2xl font-black text-brand-amber\'>MachSoft</span>'">
+              </div>
+              <div>
+                <h1 class="text-xl font-black tracking-wide text-white">ODORMACH WEB SCADA</h1>
+                <p class="text-xs text-brand-textMuted mt-1">Doğalgaz Kokulandırma & Telemetri Sistemi</p>
+              </div>
+            </div>
+
+            <!-- Master Security Pass Card -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xl space-y-4 text-left">
+              <div class="flex items-center space-x-2 text-xs font-semibold text-brand-amber">
+                <svg class="w-4 h-4 text-brand-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Yetkili Güvenlik Girişi</span>
+              </div>
+              <p class="text-[11px] text-brand-textMuted leading-relaxed">
+                Bu SCADA portalı yetkili erişim koruması altındadır. Lütfen sistem erişim şifrenizi giriniz:
+              </p>
+
+              <div class="space-y-1">
+                <div class="flex items-center space-x-2.5 px-3 py-2.5 bg-brand-bg rounded-xl border border-brand-border focus-within:border-brand-amber">
+                  <svg class="w-4 h-4 text-brand-textDim" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                  <input type="password" id="masterGatePassword" value="machsoft2026" class="bg-transparent text-xs text-white w-full outline-none placeholder-brand-textDim" placeholder="Erişim Şifresi">
+                </div>
+                <div id="masterGateError" class="text-[10px] text-rose-400 hidden pt-1">
+                  ⚠️ Hatalı şifre girdiniz. Lütfen tekrar deneyiniz.
+                </div>
+              </div>
+
+              <button onclick="verifyMasterGate()" class="w-full py-2.5 bg-brand-amber hover:bg-brand-amberDark active:scale-[0.99] text-slate-950 font-bold rounded-xl flex items-center justify-center space-x-2 transition-all shadow-md text-xs">
+                <span>Portala Giriş Yap</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </button>
+
+              <div class="text-center pt-1">
+                <span class="text-[10px] text-brand-textDim">Demo Master Şifresi: <code class="text-brand-amber font-mono">machsoft2026</code></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[10px] text-brand-textDim py-2">
+            MachSoft Bilişim ve Otomasyon Teknolojileri &copy; 2026
+          </div>
+        </div>
+
+
+        <!-- ============================================== -->
+        <!-- SCREEN 0: LOGIN & İSTASYON SEÇİMİ (Sayfa 1: 4 İzmirgaz Sahası) -->
+        <!-- ============================================== -->
+        <div id="screenLogin" class="p-5 flex-1 flex flex-col justify-between hidden">
+          <div>
+            <!-- Top Branding Header -->
+            <div class="mt-2 mb-5 flex items-center justify-between">
+              <div>
+                <h1 class="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                  ODORMACH
+                </h1>
+                <p class="text-brand-textMuted text-xs mt-0.5">Operasyon Mühendisi Giriş Portalı</p>
+              </div>
+              <div class="bg-black/60 p-1.5 rounded-xl border border-brand-border">
+                <img src="assets/machsoft-logo.jpg" alt="MachSoft" class="h-6 object-contain" onerror="this.style.display='none'">
+              </div>
+            </div>
+
+            <!-- Login Card -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-4 shadow-lg space-y-3.5">
+              <!-- Kullanici Adi -->
+              <div class="space-y-1">
+                <label class="text-[10px] text-brand-textMuted block ml-1 uppercase tracking-wider font-semibold">Kullanıcı Adı</label>
+                <div class="flex items-center space-x-3 px-3 py-2 bg-brand-bg rounded-xl border border-brand-border focus-within:border-brand-amber">
+                  <svg class="w-4 h-4 text-brand-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                  <input type="text" id="loginUsername" value="operasyon_muhendisi" class="bg-transparent text-xs text-white w-full outline-none placeholder-brand-textDim" placeholder="Kullanıcı Adı">
+                </div>
+              </div>
+
+              <!-- Sifre -->
+              <div class="space-y-1">
+                <label class="text-[10px] text-brand-textMuted block ml-1 uppercase tracking-wider font-semibold">Kayıtlı Şifre</label>
+                <div class="flex items-center space-x-3 px-3 py-2 bg-brand-bg rounded-xl border border-brand-border focus-within:border-brand-amber">
+                  <svg class="w-4 h-4 text-brand-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  <input type="password" value="••••••••" class="bg-transparent text-xs text-white w-full outline-none placeholder-brand-textDim" placeholder="Şifre">
+                </div>
+              </div>
+
+              <!-- Istasyon Secimi (Revizyon: Sadece İZMİRGAZ SAHA 01-04) -->
+              <div class="space-y-1">
+                <label class="text-[10px] text-brand-textMuted block ml-1 uppercase tracking-wider font-semibold">İstasyon Seçimi (İzmir Dağıtım)</label>
+                <div class="flex items-center space-x-2.5 px-3 py-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <svg class="w-4 h-4 text-brand-amber shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                  <select id="stationSelect" onchange="onStationChange(this.value)" class="bg-transparent text-xs font-bold text-white w-full outline-none cursor-pointer">
+                    <option value="İZMİRGAZ SAHA 01 - Bornova" class="bg-brand-card">İZMİRGAZ SAHA 01 - Bornova</option>
+                    <option value="İZMİRGAZ SAHA 02 - Torbalı" class="bg-brand-card">İZMİRGAZ SAHA 02 - Torbalı</option>
+                    <option value="İZMİRGAZ SAHA 03 - Aliağa" class="bg-brand-card">İZMİRGAZ SAHA 03 - Aliağa</option>
+                    <option value="İZMİRGAZ SAHA 04 - Pınarbaşı" class="bg-brand-card">İZMİRGAZ SAHA 04 - Pınarbaşı</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Giris Yap Button -->
+              <button onclick="loginAndGoTo('dashboard')" class="w-full py-2.5 bg-brand-amber hover:bg-brand-amberDark active:scale-[0.99] text-slate-950 font-bold rounded-xl flex items-center justify-center space-x-2 transition-all shadow-md text-xs">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                <span>İstasyona Giriş Yap</span>
+              </button>
+            </div>
+
+            <!-- Quick Direct Grid Links -->
+            <div class="mt-4 grid grid-cols-2 gap-2.5">
+              <!-- Dashboard -->
+              <div onclick="loginAndGoTo('dashboard')" class="bg-brand-surface hover:bg-brand-cardHover border border-brand-border rounded-xl p-3 cursor-pointer transition-all active:scale-[0.98]">
+                <div class="w-7 h-7 rounded-lg bg-brand-amber/15 text-brand-amber flex items-center justify-center mb-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                </div>
+                <div class="text-xs font-bold text-white">Dashboard</div>
+                <div class="text-[10px] text-brand-textMuted">Özet göstergeler</div>
+              </div>
+
+              <!-- Canli Izleme -->
+              <div onclick="loginAndGoTo('canli')" class="bg-brand-surface hover:bg-brand-cardHover border border-brand-border rounded-xl p-3 cursor-pointer transition-all active:scale-[0.98]">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <div class="text-xs font-bold text-white">Canlı Akış & P&ID</div>
+                <div class="text-[10px] text-brand-textMuted">HMI ve proses şeması</div>
+              </div>
+
+              <!-- Alarmlar -->
+              <div onclick="loginAndGoTo('alarmlar')" class="bg-brand-surface hover:bg-brand-cardHover border border-brand-border rounded-xl p-3 cursor-pointer transition-all active:scale-[0.98]">
+                <div class="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center mb-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <div class="text-xs font-bold text-white flex items-center justify-between">
+                  <span>Alarmlar</span>
+                  <span id="loginAlarmBadge" class="w-4 h-4 rounded-full bg-brand-danger text-[9px] text-white flex items-center justify-center font-bold">2</span>
+                </div>
+                <div class="text-[10px] text-brand-textMuted">Olay kayıtları</div>
+              </div>
+
+              <!-- Tuketim -->
+              <div onclick="loginAndGoTo('tuketim')" class="bg-brand-surface hover:bg-brand-cardHover border border-brand-border rounded-xl p-3 cursor-pointer transition-all active:scale-[0.98]">
+                <div class="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center mb-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                </div>
+                <div class="text-xs font-bold text-white">Tüketim</div>
+                <div class="text-[10px] text-brand-textMuted">Saatlik dilim dökümü</div>
+              </div>
+
+              <!-- Grafikler -->
+              <div onclick="loginAndGoTo('grafikler')" class="bg-brand-surface hover:bg-brand-cardHover border border-brand-border rounded-xl p-3 cursor-pointer transition-all active:scale-[0.98]">
+                <div class="w-7 h-7 rounded-lg bg-brand-amber/15 text-brand-amber flex items-center justify-center mb-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <div class="text-xs font-bold text-white">Grafikler</div>
+                <div class="text-[10px] text-brand-textMuted">4 Kategori seçimi</div>
+              </div>
+
+              <!-- Raporlar -->
+              <div onclick="loginAndGoTo('raporlar')" class="bg-brand-surface hover:bg-brand-cardHover border border-brand-border rounded-xl p-3 cursor-pointer transition-all active:scale-[0.98]">
+                <div class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center mb-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+                <div class="text-xs font-bold text-white">Raporlar</div>
+                <div class="text-[10px] text-brand-textMuted">EPDK & Teknik PDF</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center text-[10px] text-brand-textDim py-3">
+            MachSoft ODORMACH &bull; Doğalgaz Kokulandırma SCADA v3.0
+          </div>
+        </div>
+
+
+        <!-- ============================================== -->
+        <!-- SCREEN WRAPPER FOR LOGGED-IN TABS -->
+        <!-- ============================================== -->
+        <div id="screenLoggedIn" class="flex-1 flex flex-col hidden">
+
+          <!-- TOP APP BAR -->
+          <div class="px-3.5 py-2.5 bg-brand-bg/95 backdrop-blur border-b border-brand-border/40 flex items-center justify-between sticky top-0 z-20">
+            <button onclick="goToLogin()" title="İstasyon Değiştir / Geri Dön" class="p-1 -ml-1 text-slate-300 hover:text-white flex items-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+
+            <!-- Station Switcher Title -->
+            <div class="flex-1 px-2">
+              <span id="activeStationTitle" class="text-sm font-extrabold text-white truncate block">
+                İZMİRGAZ SAHA 01 - Bornova
+              </span>
+              <span class="text-[10px] text-brand-textMuted font-mono">MachSoft SCADA Node #01</span>
+            </div>
+
+            <!-- Logout -->
+            <button onclick="goToLogin()" class="flex items-center space-x-1 text-brand-amber hover:text-brand-amberDark text-[11px] font-semibold px-2 py-1 rounded bg-brand-surface border border-brand-border">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              <span>Çıkış</span>
+            </button>
+          </div>
+
+
+          <!-- ============================================== -->
+          <!-- TAB 1: DASHBOARD -->
+          <!-- ============================================== -->
+          <div id="tabDashboard" class="p-3.5 space-y-3 pb-24">
+            <!-- Top Status Card -->
+            <div class="bg-gradient-to-r from-[#142933] to-[#1a3847] border border-brand-border rounded-2xl p-3.5 shadow-sm relative overflow-hidden">
+              <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-brand-amber/10 rounded-full blur-xl pointer-events-none"></div>
+              <h2 id="cardStationName" class="text-sm font-bold text-white">İZMİRGAZ SAHA 01 - Bornova</h2>
+              <div class="flex items-center space-x-2 mt-1 text-xs">
+                <span id="systemStatusDot" class="w-2.5 h-2.5 rounded-full bg-brand-green animate-pulse"></span>
+                <span id="systemStatusText" class="font-medium text-slate-200">Sistem NORMAL</span>
+                <span class="text-brand-textDim">•</span>
+                <span id="lastUpdateText" class="text-brand-textMuted">Son güncelleme <span id="secAgo">3</span> sn önce</span>
+              </div>
+            </div>
+
+            <!-- Metric Card 1: Gerçek Akış (FM Ölçümü) -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm transition hover:border-brand-borderLight">
+              <div class="text-xs text-brand-textMuted font-medium">Gerçek Akış</div>
+              <div class="text-2xl font-extrabold text-white mt-0.5 tracking-tight flex items-baseline justify-between">
+                <div><span id="valFlow">9850</span> <span class="text-xs font-semibold text-brand-textMuted font-sans">m³/h</span></div>
+                <span class="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40 font-mono">FM (Flowmetre) Aktif</span>
+              </div>
+            </div>
+
+            <!-- Metric Card 2: Konsantrasyon -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm transition hover:border-brand-borderLight">
+              <div class="text-xs text-brand-textMuted font-medium">Konsantrasyon</div>
+              <div class="text-2xl font-extrabold text-white mt-0.5 tracking-tight flex items-baseline justify-between">
+                <div><span id="valConcentration">12.0</span> <span class="text-xs font-semibold text-brand-textMuted font-sans">mg/m³</span></div>
+                <span class="text-[10px] text-brand-amber bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40 font-mono">Hedef: 10-15</span>
+              </div>
+            </div>
+
+            <!-- Metric Card 3: Son Enjeksiyon -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm transition hover:border-brand-borderLight">
+              <div class="text-xs text-brand-textMuted font-medium">Son Enjeksiyon (FM Ölçümü)</div>
+              <div class="text-2xl font-extrabold text-white mt-0.5 tracking-tight flex items-baseline justify-between">
+                <div><span id="valLastInj">18.76</span> <span class="text-xs font-semibold text-brand-textMuted font-sans">gr/strk</span></div>
+                <div id="strokePulseBadge" class="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                  <span>STROKE</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metric Card 4: Toplam Enjeksiyon -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm transition hover:border-brand-borderLight">
+              <div class="text-xs text-brand-textMuted font-medium">Toplam Enjeksiyon</div>
+              <div class="text-2xl font-extrabold text-white mt-0.5 tracking-tight flex items-baseline justify-between">
+                <div><span id="valTotalInj">19.085</span> <span class="text-xs font-semibold text-brand-textMuted font-sans">kg</span></div>
+                <button onclick="resetTotalCounter()" class="text-[10px] text-brand-textMuted hover:text-white bg-brand-bg px-2 py-0.5 rounded border border-brand-border font-mono">
+                  Sayaç Sıfırla
+                </button>
+              </div>
+            </div>
+
+            <!-- Metric Card 5: Yatay Tank Seviyesi + 4 Seviye Sinyali (LL, L, H, HH) + 4 Bar Basınç + Opsiyonel Sıcaklık -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm space-y-2">
+              <div class="flex justify-between items-center text-xs text-brand-textMuted font-medium">
+                <span class="flex items-center gap-1.5 font-bold text-white">
+                  <span>🛢️</span> <span>Yatay THT Tankı</span>
+                </span>
+                <span id="valTankPercent" class="text-emerald-400 font-semibold font-mono">%79.2</span>
+              </div>
+              <div class="text-2xl font-extrabold text-white tracking-tight">
+                <span id="valTankLevel">1979.422</span> <span class="text-xs font-semibold text-brand-textMuted font-sans">Litre</span>
+              </div>
+              <!-- Tank progress bar -->
+              <div class="w-full bg-brand-bg rounded-full h-2 overflow-hidden border border-brand-border">
+                <div id="tankLevelBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 79.2%"></div>
+              </div>
+              <!-- 4-point Level Signals: LL, L, H, HH -->
+              <div class="pt-2 border-t border-brand-border/40 grid grid-cols-4 gap-1.5 text-center text-[10px] font-mono">
+                <div id="sigLL" class="p-1 rounded bg-brand-bg border border-brand-border text-brand-textDim">
+                  <div class="w-2 h-2 rounded-full bg-slate-600 mx-auto mb-0.5"></div>
+                  <span>LL (&lt;10%)</span>
+                </div>
+                <div id="sigL" class="p-1 rounded bg-brand-bg border border-brand-border text-brand-textDim">
+                  <div class="w-2 h-2 rounded-full bg-slate-600 mx-auto mb-0.5"></div>
+                  <span>L (&lt;25%)</span>
+                </div>
+                <div id="sigH" class="p-1 rounded bg-emerald-950/60 border border-emerald-600/60 text-emerald-400 font-bold">
+                  <div class="w-2 h-2 rounded-full bg-emerald-400 mx-auto mb-0.5 animate-pulse"></div>
+                  <span>H (&gt;70%)</span>
+                </div>
+                <div id="sigHH" class="p-1 rounded bg-brand-bg border border-brand-border text-brand-textDim">
+                  <div class="w-2 h-2 rounded-full bg-slate-600 mx-auto mb-0.5"></div>
+                  <span>HH (&gt;90%)</span>
+                </div>
+              </div>
+              <!-- Tank Basıncı (4 bar) ve Tank Sıcaklığı (Opsiyonel) -->
+              <div class="pt-1.5 flex justify-between items-center text-[11px] text-brand-textMuted border-t border-brand-border/30">
+                <span>Basınç: <strong class="text-white font-mono">4.0 bar</strong></span>
+                <span>Sıcaklık: <strong class="text-amber-300 font-mono">18.5 °C</strong> <span class="text-[9px] text-brand-textDim">(Opsiyonel)</span></span>
+              </div>
+            </div>
+
+            <!-- Metric Card 6: Aktif Alarm -->
+            <div onclick="switchTab('alarmlar')" class="bg-brand-surface hover:bg-brand-cardHover border border-brand-border rounded-2xl p-3.5 shadow-sm cursor-pointer transition">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs text-brand-textMuted font-medium">Aktif Alarm Sayısı</div>
+                  <div id="valActiveAlarm" class="text-2xl font-extrabold text-brand-amber mt-0.5 tracking-tight">2</div>
+                </div>
+                <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-brand-amber">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- 24 Saatlik Kısa Trend -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xs font-bold text-white">24 Saatlik Akış & Dozaj Eğrisi</h3>
+                <div class="flex items-center space-x-2 text-[10px]">
+                  <span class="flex items-center gap-1 text-emerald-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Akış
+                  </span>
+                  <span class="flex items-center gap-1 text-brand-amber">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-amber"></span> Dozaj
+                  </span>
+                </div>
+              </div>
+              <div class="h-40 w-full relative">
+                <canvas id="quickTrendCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- ============================================== -->
+          <!-- TAB 2: CANLI İZLEME (Sayfa 1 HMI & P&ID Birebir Revizyon) -->
+          <!-- ============================================== -->
+          <div id="tabCanli" class="p-3.5 space-y-3 pb-24 hidden">
+            <!-- Top Status Card -->
+            <div class="bg-gradient-to-r from-[#142933] to-[#1a3847] border border-brand-border rounded-2xl p-3.5 shadow-sm">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h2 class="text-sm font-bold text-white">Canlı Proses İzleme (HMI SCADA)</h2>
+                  <div class="flex items-center space-x-2 mt-1 text-xs">
+                    <span id="canliStatusDot" class="w-2.5 h-2.5 rounded-full bg-brand-green animate-pulse"></span>
+                    <span id="canliStatusText" class="font-medium text-slate-200">Sistem NORMAL</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] text-brand-amber bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40 font-mono">PLC Otomatik Mod</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Canlı P&ID Akış Şeması (Doküman Sayfa 1 Birebir) -->
+            <!-- Yatay Tank (Solda/Altta) -> Pano Pompa 1 & 2 (Sağa bakan oklar) -> FM Flowmetre -> Ana Gaz Borusu -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3 shadow-sm space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-brand-textMuted font-bold uppercase tracking-wider">Proses Akış Şeması (P&ID)</span>
+                <span class="text-[10px] text-emerald-400 font-mono bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/50">Akış Sağa Yönlü &gt;</span>
+              </div>
+              
+              <div class="bg-[#09151c] rounded-xl p-2 border border-brand-border relative overflow-hidden">
+                <svg class="w-full h-48" viewBox="0 0 420 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Pano / Skid Kabini Sınır Çizgisi -->
+                  <rect x="130" y="20" width="170" height="135" rx="8" fill="#10232c" stroke="#254d5e" stroke-width="1.5" stroke-dasharray="4,3"/>
+                  <text x="215" y="32" fill="#608290" font-size="8" font-weight="bold" text-anchor="middle">EX-PROOF DOZAJ PANOSU / KABİN</text>
+
+                  <!-- 1. YATAY SİLİNDİRİK ANA DEPOLAMA TANKI (Sol Altta) -->
+                  <!-- Tank Body (Horizontal Cylinder) -->
+                  <rect x="15" y="75" width="95" height="60" rx="14" fill="#14313f" stroke="#38bdf8" stroke-width="2"/>
+                  <!-- Liquid Level in Tank -->
+                  <rect id="pidTankLiquid" x="18" y="90" width="89" height="42" rx="10" fill="#0d9488" fill-opacity="0.45"/>
+                  <text x="62" y="98" fill="#f1f5f9" font-size="8" font-weight="bold" text-anchor="middle">YATAY TANK</text>
+                  <text id="pidTankText" x="62" y="112" fill="#2dd4bf" font-size="9" font-weight="extrabold" text-anchor="middle">1979 L</text>
+                  <text x="62" y="125" fill="#f59e0b" font-size="7" font-weight="bold" text-anchor="middle">4.0 bar N₂</text>
+
+                  <!-- 4 Level Detection Points on Tank (LL, L, H, HH) -->
+                  <circle id="pidSigHH" cx="15" cy="85" r="3" fill="#64748b"/>
+                  <text x="6" y="87" fill="#94a3b8" font-size="6" font-weight="bold">HH</text>
+                  <circle id="pidSigH" cx="15" cy="98" r="3" fill="#22c55e"/>
+                  <text x="7" y="100" fill="#22c55e" font-size="6" font-weight="bold">H</text>
+                  <circle id="pidSigL" cx="15" cy="115" r="3" fill="#64748b"/>
+                  <text x="7" y="117" fill="#94a3b8" font-size="6" font-weight="bold">L</text>
+                  <circle id="pidSigLL" cx="15" cy="128" r="3" fill="#64748b"/>
+                  <text x="6" y="130" fill="#94a3b8" font-size="6" font-weight="bold">LL</text>
+
+                  <!-- Pipe from Horizontal Tank to Pumps in Cabinet -->
+                  <path d="M110 105 H 145" stroke="#0d9488" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M110 105 H 145" stroke="#5eead4" stroke-width="2" class="flow-line"/>
+
+                  <!-- Manifold Branching to Pump 1 & Pump 2 -->
+                  <path d="M145 60 V 125" stroke="#0d9488" stroke-width="3"/>
+                  <path d="M145 60 H 155" stroke="#0d9488" stroke-width="3"/>
+                  <path d="M145 125 H 155" stroke="#475569" stroke-width="3"/>
+
+                  <!-- POMPA 1 (Üst Hat - OKLAR KESİNLİKLE SAĞA BAKMALI: '>') -->
+                  <circle id="pidPump1Circle" cx="170" cy="60" r="14" fill="#1e3a47" stroke="#22c55e" stroke-width="2"/>
+                  <!-- Triangle pointing RIGHT (x1=164,y1=52 to x2=178,y2=60 to x3=164,y3=68) -->
+                  <polygon id="pidPump1Tri" points="164,52 178,60 164,68" fill="#22c55e"/>
+                  <text id="pidPump1Label" x="170" y="42" fill="#22c55e" font-size="8" font-weight="bold" text-anchor="middle">P1 (Aktif)</text>
+
+                  <!-- POMPA 2 (Alt Hat - OKLAR KESİNLİKLE SAĞA BAKMALI: '>') -->
+                  <circle id="pidPump2Circle" cx="170" cy="125" r="14" fill="#162d38" stroke="#64748b" stroke-width="1.5"/>
+                  <!-- Triangle pointing RIGHT -->
+                  <polygon id="pidPump2Tri" points="164,117 178,125 164,133" fill="#64748b"/>
+                  <text id="pidPump2Label" x="170" y="147" fill="#94a3b8" font-size="8" text-anchor="middle">P2 (Yedek)</text>
+
+                  <!-- Pipe from Pumps to Flowmeter (FM) on Right -->
+                  <path d="M184 60 H 205 V 85 H 220" stroke="#0d9488" stroke-width="3"/>
+                  <path d="M184 60 H 205 V 85 H 220" stroke="#5eead4" stroke-width="2" class="flow-line"/>
+                  <path d="M184 125 H 205 V 85" stroke="#475569" stroke-width="2"/>
+
+                  <!-- 2 POMPANIN SAĞINDAKİ ÖLÇÜM CİHAZI: FLOWMETRE (FM) -->
+                  <rect x="220" y="65" width="48" height="40" rx="4" fill="#1b3644" stroke="#38bdf8" stroke-width="1.8"/>
+                  <rect x="224" y="69" width="40" height="15" rx="2" fill="#081820" stroke="#254d5e" stroke-width="1"/>
+                  <text id="pidFmValue" x="244" y="80" fill="#38bdf8" font-size="8" font-weight="extrabold" font-family="monospace" text-anchor="middle">18.76</text>
+                  <text x="244" y="94" fill="#f1f5f9" font-size="7" font-weight="bold" text-anchor="middle">FM</text>
+                  <text x="244" y="101" fill="#8da2ac" font-size="6" text-anchor="middle">Flowmetre</text>
+
+                  <!-- Pipe Exiting Cabinet to Main Gas Pipeline -->
+                  <path d="M268 85 H 335" stroke="#0d9488" stroke-width="3.5"/>
+                  <path d="M268 85 H 335" stroke="#5eead4" stroke-width="2" class="flow-line"/>
+
+                  <!-- ANA DOĞALGAZ BORU HATTI (Sağda Dikey/Yatay Boru) -->
+                  <rect x="335" y="15" width="70" height="145" rx="6" fill="#1e293b" fill-opacity="0.4" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,2"/>
+                  <text x="370" y="28" fill="#f59e0b" font-size="7" font-weight="bold" text-anchor="middle">DOĞALGAZ</text>
+                  <text x="370" y="37" fill="#f59e0b" font-size="7" font-weight="bold" text-anchor="middle">BORU HATTI</text>
+
+                  <!-- Natural Gas Flow Arrow inside pipe -->
+                  <path d="M370 45 V 145" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+                  <path d="M370 45 V 145" stroke="#fef08a" stroke-width="2" class="flow-line"/>
+
+                  <!-- Injection Quill Nozzle -->
+                  <path d="M335 85 L 368 85" stroke="#22c55e" stroke-width="3"/>
+                  <circle id="sprayDot" cx="370" cy="85" r="3" fill="#22c55e" class="animate-ping"/>
+                  <text id="pidConcText" x="370" y="105" fill="#e2e8f0" font-size="8" font-weight="bold" text-anchor="middle">12.0 mg/m³</text>
+                  <text id="pidFlowText" x="370" y="117" fill="#94a3b8" font-size="7" text-anchor="middle">9850 m³/h</text>
+                </svg>
+              </div>
+            </div>
+
+            <!-- HMI PANELİ PARAMETRE DÖKÜMÜ (Sayfa 1 HMI Tablosu Birebir) -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm space-y-3">
+              <div class="flex items-center justify-between border-b border-brand-border/50 pb-2">
+                <span class="text-xs font-bold text-white uppercase tracking-wider">HMI Operasyon Parametreleri</span>
+                <span class="text-[10px] text-brand-textMuted font-mono">Mod: PLC Otonom</span>
+              </div>
+
+              <!-- Key Value Parameter Grid -->
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <!-- Tahmini Akış -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <span class="text-[10px] text-brand-textMuted block">Tahmini Akış</span>
+                  <span class="text-sm font-bold text-white font-mono">10.000 <span class="text-[10px] text-brand-textDim">m³/h</span></span>
+                </div>
+                <!-- Gerçek Akış -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <span class="text-[10px] text-brand-textMuted block">Gerçek Akış</span>
+                  <span class="text-sm font-bold text-emerald-400 font-mono"><span id="hmiFlow">9850</span> <span class="text-[10px] text-emerald-600">m³/h</span></span>
+                </div>
+                <!-- Konsantrasyon -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <span class="text-[10px] text-brand-textMuted block">Konsantrasyon</span>
+                  <span class="text-sm font-bold text-brand-amber font-mono"><span id="hmiConc">12.0</span> <span class="text-[10px] text-amber-600">mg/m³</span></span>
+                </div>
+                <!-- Toplam Enjeksiyon -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <div class="flex justify-between items-center">
+                    <span class="text-[10px] text-brand-textMuted">Toplam Enjeksiyon</span>
+                    <button onclick="resetTotalCounter()" class="text-[9px] text-brand-amber hover:underline">Sıfırla</button>
+                  </div>
+                  <span class="text-sm font-bold text-white font-mono"><span id="hmiTotalInj">19.085</span> <span class="text-[10px] text-brand-textDim">kg</span></span>
+                </div>
+                <!-- Son Enjeksiyon (FM Ölçümü) -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <span class="text-[10px] text-brand-textMuted block">Son Enjeksiyon (FM)</span>
+                  <span class="text-sm font-bold text-sky-400 font-mono"><span id="hmiLastInj">18.76</span> <span class="text-[10px] text-sky-600">gr/strk</span></span>
+                </div>
+                <!-- Manuel Periyot -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <span class="text-[10px] text-brand-textMuted block">Manuel Periyot</span>
+                  <span class="text-sm font-bold text-white font-mono">60 <span class="text-[10px] text-brand-textDim">sn</span></span>
+                </div>
+                <!-- Dozaj Periyodu -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <span class="text-[10px] text-brand-textMuted block">Dozaj Periyodu (PLC)</span>
+                  <span id="hmiPeriod" class="text-sm font-bold text-white font-mono">562 sn</span>
+                </div>
+                <!-- Gelecek Basıma Kalan Süre -->
+                <div class="p-2 bg-brand-bg rounded-xl border border-brand-border">
+                  <span class="text-[10px] text-brand-textMuted block">Gelecek Basıma Kalan</span>
+                  <span id="hmiNextStroke" class="text-sm font-bold text-brand-amber font-mono">342 sn</span>
+                </div>
+              </div>
+
+              <!-- HMI Toggles (Debi Seçimi, Mod Seçimi, Pompa Seçimi) -->
+              <div class="pt-2 border-t border-brand-border/50 grid grid-cols-3 gap-1.5 text-center text-[10px]">
+                <button onclick="toggleFlowMode()" id="btnHmiFlowMode" class="p-1.5 rounded-lg bg-brand-bg border border-brand-border text-white hover:border-brand-amber font-semibold transition">
+                  <span class="text-brand-textDim block text-[9px]">Debi Seçimi</span>
+                  <span id="lblHmiFlowMode" class="text-emerald-400">Tahmini</span>
+                </button>
+                <button onclick="toggleOperationMode()" id="btnHmiOpMode" class="p-1.5 rounded-lg bg-brand-bg border border-brand-border text-white hover:border-brand-amber font-semibold transition">
+                  <span class="text-brand-textDim block text-[9px]">Mod Seçimi</span>
+                  <span id="lblHmiOpMode" class="text-brand-amber">Otomatik</span>
+                </button>
+                <button onclick="togglePumpSwitch()" id="btnHmiPumpSelect" class="p-1.5 rounded-lg bg-brand-bg border border-brand-border text-white hover:border-brand-amber font-semibold transition">
+                  <span class="text-brand-textDim block text-[9px]">Pompa Seçimi</span>
+                  <span id="lblHmiPumpSelect" class="text-emerald-400">Pompa 1 (Yazlık)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pompa Durumu Özeti -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm space-y-2">
+              <div class="text-xs text-brand-textMuted font-bold uppercase tracking-wider">Pompa Çalışma Durumu</div>
+              <div class="flex items-center justify-between p-2.5 bg-brand-bg rounded-xl border border-brand-border">
+                <div class="flex items-center space-x-2">
+                  <span id="pump1Dot" class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span class="text-xs font-bold text-white">Pompa 1</span>
+                  <span class="text-[10px] text-brand-textMuted font-mono">1.842.190 Strok</span>
+                </div>
+                <span id="pump1StatusText" class="text-xs font-bold text-emerald-400 tracking-wider">AKTİF</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-brand-bg rounded-xl border border-brand-border">
+                <div class="flex items-center space-x-2">
+                  <span id="pump2Dot" class="w-3 h-3 rounded-full bg-slate-500"></span>
+                  <span class="text-xs font-bold text-white">Pompa 2</span>
+                  <span class="text-[10px] text-brand-textMuted font-mono">920.450 Strok</span>
+                </div>
+                <span id="pump2StatusText" class="text-xs font-bold text-slate-400 tracking-wider">BEKLEMEDE</span>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- ============================================== -->
+          <!-- TAB 3: ALARMLAR -->
+          <!-- ============================================== -->
+          <div id="tabAlarmlar" class="p-3.5 space-y-3 pb-24 hidden">
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-4 shadow-sm space-y-3">
+              <div class="flex justify-between items-center">
+                <div class="text-sm font-bold text-white">Alarm & Arıza Merkezi</div>
+                <span class="text-[10px] text-brand-amber font-mono bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">2 Aktif Alarm</span>
+              </div>
+
+              <!-- Item 1: Pompa 1 Düşük Akış / Körük Hasarı İkazı -->
+              <div id="alarmItem1" class="border border-rose-500/80 bg-brand-bg/60 rounded-xl p-3.5 transition-all hover:bg-brand-bg">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center space-x-2.5">
+                    <span class="text-rose-500 font-extrabold text-base leading-none">!</span>
+                    <div>
+                      <span class="text-xs font-bold text-slate-100 block">Pompa 1 Düşük Akış &bull; Kritik</span>
+                      <span class="text-[10px] text-rose-300">FM debisi 0 gr/strk seviyesine indi, körük kontrolü gerekli</span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span id="alarm1StatusBadge" class="text-[10px] font-semibold text-rose-400">Aktif • 3 dk önce</span>
+                  </div>
+                </div>
+                <div class="mt-2.5 pt-2 border-t border-brand-border/40 flex justify-end">
+                  <button onclick="resolveAlarm(1)" class="px-2.5 py-1 bg-brand-card hover:bg-brand-cardHover border border-brand-border text-brand-amber rounded text-[10px] font-semibold">
+                    ✓ Onayla / Çözüldü
+                  </button>
+                </div>
+              </div>
+
+              <!-- Item 2: Tank Seviye Uyarı -->
+              <div id="alarmItem2" class="border border-amber-500/80 bg-brand-bg/60 rounded-xl p-3.5 transition-all hover:bg-brand-bg">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center space-x-2.5">
+                    <span class="text-brand-amber font-bold text-sm leading-none">ⓘ</span>
+                    <div>
+                      <span class="text-xs font-bold text-slate-100 block">Tank Seviye Uyarısı (L Sinyali)</span>
+                      <span class="text-[10px] text-amber-300">Tank doluluk oranı %22 seviyesine indi, kimyasal ikmali önerilir</span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span id="alarm2StatusBadge" class="text-[10px] font-semibold text-brand-amber">Aktif • 12 dk önce</span>
+                  </div>
+                </div>
+                <div class="mt-2.5 pt-2 border-t border-brand-border/40 flex justify-end">
+                  <button onclick="resolveAlarm(2)" class="px-2.5 py-1 bg-brand-card hover:bg-brand-cardHover border border-brand-border text-brand-amber rounded text-[10px] font-semibold">
+                    ✓ Onayla / Çözüldü
+                  </button>
+                </div>
+              </div>
+
+              <!-- Item 3: PLC Haberleşme Kesildi (Resolved) -->
+              <div id="alarmItem3" class="border border-brand-border bg-brand-bg/60 rounded-xl p-3 opacity-75">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-slate-400 font-extrabold text-sm leading-none">✓</span>
+                    <span class="text-xs font-medium text-slate-300">PLC Modbus/TCP Haberleşmesi</span>
+                  </div>
+                  <span class="text-[10px] text-brand-textMuted">Çözüldü • 1 gün önce</span>
+                </div>
+              </div>
+
+              <!-- Quick Demo Trigger Button in Alarm Center -->
+              <div class="pt-2 text-center">
+                <button onclick="simulatePumpFailure()" class="text-xs text-brand-amber hover:underline font-semibold">
+                  + Yeni Arıza Tetikle (Demo Testi)
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- ============================================== -->
+          <!-- TAB 4: TÜKETİM (Sayfa 3: Saat Dilimi Seçimi) -->
+          <!-- ============================================== -->
+          <div id="tabTuketim" class="p-3.5 space-y-3 pb-24 hidden">
+            <!-- 4 Ana Tüketim Kartı -->
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-brand-surface border border-brand-border rounded-xl p-3">
+                <span class="text-[10px] text-brand-textMuted font-medium block">Bugün</span>
+                <span class="text-lg font-black text-white"><span id="tuketimBugun">0.9305</span> <span class="text-xs font-normal text-brand-textDim">kg</span></span>
+              </div>
+              <div class="bg-brand-surface border border-brand-border rounded-xl p-3">
+                <span class="text-[10px] text-brand-textMuted font-medium block">Önceki Gün</span>
+                <span class="text-lg font-black text-white"><span id="tuketimOncekiGun">2.8684</span> <span class="text-xs font-normal text-brand-textDim">kg</span></span>
+              </div>
+              <div class="bg-brand-surface border border-brand-border rounded-xl p-3">
+                <span class="text-[10px] text-brand-textMuted font-medium block">Bu Hafta</span>
+                <span class="text-lg font-black text-white"><span id="tuketimBuHafta">15.5670</span> <span class="text-xs font-normal text-brand-textDim">kg</span></span>
+              </div>
+              <div class="bg-brand-surface border border-brand-border rounded-xl p-3">
+                <span class="text-[10px] text-brand-textMuted font-medium block">Bu Ay</span>
+                <span class="text-lg font-black text-white"><span id="tuketimBuAy">18.4461</span> <span class="text-xs font-normal text-brand-textDim">kg</span></span>
+              </div>
+            </div>
+
+            <!-- Saatlik Tüketim Raporu İçin Saat Dilimi Seçimi (Sayfa 3 Gereksinimi) -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">Günün Saatlik Dilimini Seçin:</span>
+                <span class="text-[10px] text-emerald-400 font-mono">Tıklanabilir Slotlar</span>
+              </div>
+
+              <!-- Hourly Slot Pills -->
+              <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-brand-bg rounded-xl border border-brand-border">
+                <button onclick="selectHourSlot('00:00 - 01:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">00:00-01:00</button>
+                <button onclick="selectHourSlot('02:00 - 03:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">02:00-03:00</button>
+                <button onclick="selectHourSlot('04:00 - 05:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">04:00-05:00</button>
+                <button onclick="selectHourSlot('06:00 - 07:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">06:00-07:00</button>
+                <button onclick="selectHourSlot('08:00 - 09:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">08:00-09:00</button>
+                <button onclick="selectHourSlot('10:00 - 11:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">10:00-11:00</button>
+                <button onclick="selectHourSlot('12:00 - 13:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">12:00-13:00</button>
+                <button onclick="selectHourSlot('13:00 - 14:00')" id="slot1314" class="hour-slot-btn px-2 py-1 rounded bg-brand-amber text-slate-950 font-bold text-[10px] font-mono shadow">13:00-14:00</button>
+                <button onclick="selectHourSlot('15:00 - 16:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">15:00-16:00</button>
+                <button onclick="selectHourSlot('17:00 - 18:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">17:00-18:00</button>
+                <button onclick="selectHourSlot('19:00 - 20:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">19:00-20:00</button>
+                <button onclick="selectHourSlot('21:00 - 22:00')" class="hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono">21:00-22:00</button>
+              </div>
+
+              <!-- Selected Hour Detail Box -->
+              <div class="p-3 bg-brand-bg rounded-xl border border-brand-amber/40 text-xs space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="text-brand-textMuted">Seçili Saat Dilimi:</span>
+                  <span id="selectedHourLabel" class="font-bold text-brand-amber font-mono">13:00 - 14:00</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                  <div>
+                    <span class="text-[9px] text-brand-textDim block">Tüketim</span>
+                    <strong class="text-white" id="selectedHourKg">0.118 kg</strong>
+                  </div>
+                  <div>
+                    <span class="text-[9px] text-brand-textDim block">Strok Adedi</span>
+                    <strong class="text-emerald-400" id="selectedHourStrokes">7 Vuruş</strong>
+                  </div>
+                  <div>
+                    <span class="text-[9px] text-brand-textDim block">Ort. Debi</span>
+                    <strong class="text-sky-300" id="selectedHourFlow">9.850 m³/h</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hourly Canvas Chart -->
+              <div class="h-40 w-full relative pt-1">
+                <canvas id="hourlyConsumptionCanvas"></canvas>
+              </div>
+
+              <!-- 4 Stat Pill Boxes -->
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <div class="bg-brand-bg/80 border border-brand-border rounded-xl p-2 text-center">
+                  <span class="text-[10px] text-brand-textMuted block">Anlık:</span>
+                  <span id="tuketimStatAnlik" class="text-xs font-bold text-white font-mono">0.9305 kg</span>
+                </div>
+                <div class="bg-brand-bg/80 border border-brand-border rounded-xl p-2 text-center">
+                  <span class="text-[10px] text-brand-textMuted block">Min:</span>
+                  <span id="tuketimStatMin" class="text-xs font-bold text-white font-mono">0.7420 kg</span>
+                </div>
+                <div class="bg-brand-bg/80 border border-brand-border rounded-xl p-2 text-center">
+                  <span class="text-[10px] text-brand-textMuted block">Max:</span>
+                  <span id="tuketimStatMax" class="text-xs font-bold text-white font-mono">1.1020 kg</span>
+                </div>
+                <div class="bg-brand-bg/80 border border-brand-border rounded-xl p-2 text-center">
+                  <span class="text-[10px] text-brand-textMuted block">Ortalama:</span>
+                  <span id="tuketimStatOrtalama" class="text-xs font-bold text-white font-mono">0.8847 kg</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- ============================================== -->
+          <!-- TAB 5: GRAFİKLER (Sayfa 2: 4 Kategori Seçimli Grafikler) -->
+          <!-- ============================================== -->
+          <div id="tabGrafikler" class="p-3.5 space-y-3 pb-24 hidden">
+            <!-- 4 Kategori Seçim Butonları (Sayfa 2 Birebir) -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3 space-y-2">
+              <div class="flex justify-between items-center">
+                <h2 class="text-xs font-bold text-white uppercase tracking-wider">Grafik Kategorisi Seçin</h2>
+                <div class="bg-brand-bg border border-brand-border rounded-lg p-0.5 text-[10px] flex font-mono">
+                  <button onclick="setChartRange('24h')" id="btnRange24h" class="px-2 py-0.5 bg-brand-amber text-slate-950 font-bold rounded">24S</button>
+                  <button onclick="setChartRange('7d')" id="btnRange7d" class="px-2 py-0.5 text-brand-textMuted rounded">7G</button>
+                  <button onclick="setChartRange('30d')" id="btnRange30d" class="px-2 py-0.5 text-brand-textMuted rounded">30G</button>
+                </div>
+              </div>
+
+              <!-- 4 Seçim Butonu -->
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <!-- 1. Enjeksiyon Grafikleri -->
+                <button onclick="showGraphCategory('enjeksiyon')" id="btnCatEnjeksiyon" class="graph-cat-btn p-2.5 rounded-xl border bg-brand-amber text-slate-950 font-bold border-brand-amber shadow text-left transition flex items-center gap-2">
+                  <span class="text-base">💉</span>
+                  <div>
+                    <span class="block leading-tight">Enjeksiyon</span>
+                    <span class="text-[9px] opacity-80 font-normal">Son ve Toplam (gr)</span>
+                  </div>
+                </button>
+
+                <!-- 2. Tüketim Grafikleri -->
+                <button onclick="showGraphCategory('tuketim')" id="btnCatTuketim" class="graph-cat-btn p-2.5 rounded-xl border bg-brand-bg border-brand-border text-slate-300 font-semibold hover:border-brand-amber text-left transition flex items-center gap-2">
+                  <span class="text-base">📊</span>
+                  <div>
+                    <span class="block leading-tight">Tüketim</span>
+                    <span class="text-[9px] text-brand-textDim font-normal">Haftalık/Aylık/Günlük</span>
+                  </div>
+                </button>
+
+                <!-- 3. Debi Grafikleri -->
+                <button onclick="showGraphCategory('debi')" id="btnCatDebi" class="graph-cat-btn p-2.5 rounded-xl border bg-brand-bg border-brand-border text-slate-300 font-semibold hover:border-brand-amber text-left transition flex items-center gap-2">
+                  <span class="text-base">🌊</span>
+                  <div>
+                    <span class="block leading-tight">Debi Grafiği</span>
+                    <span class="text-[9px] text-brand-textDim font-normal">Gerçek & Tahmini</span>
+                  </div>
+                </button>
+
+                <!-- 4. Tank Grafiği -->
+                <button onclick="showGraphCategory('tank')" id="btnCatTank" class="graph-cat-btn p-2.5 rounded-xl border bg-brand-bg border-brand-border text-slate-300 font-semibold hover:border-brand-amber text-left transition flex items-center gap-2">
+                  <span class="text-base">🛢️</span>
+                  <div>
+                    <span class="block leading-tight">Tank Grafiği</span>
+                    <span class="text-[9px] text-brand-textDim font-normal">Kalan Seviye (Lt)</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Dynamic Category Chart Canvas Card -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-4 space-y-2 shadow-sm">
+              <div class="flex items-center justify-between text-xs">
+                <span id="catChartTitle" class="text-white font-bold">Enjeksiyon Grafikleri (Son & Toplam)</span>
+                <span id="catChartSubtitle" class="text-[10px] text-emerald-400 font-mono">Birim: gram</span>
+              </div>
+              <div class="h-60 relative w-full">
+                <canvas id="categoryChartCanvas"></canvas>
+              </div>
+              <div id="catChartStats" class="p-2.5 bg-brand-bg rounded-xl border border-brand-border/50 text-[11px] text-brand-textMuted flex items-center justify-between font-mono">
+                <span>Son Enjeksiyon: <strong class="text-white">18.76 gr</strong></span>
+                <span>Toplam: <strong class="text-emerald-400">19.085 kg</strong></span>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- ============================================== -->
+          <!-- TAB 6: RAPORLAR (Sayfa 3: Tarih/Saat Seçimi & 2 Ayrı PDF) -->
+          <!-- ============================================== -->
+          <div id="tabRaporlar" class="p-3.5 space-y-3 pb-24 hidden">
+            
+            <!-- Rapor Filtresi (Gün / Tarih / Saat Seçimli) -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm space-y-3">
+              <div class="flex justify-between items-center">
+                <div class="text-xs font-bold text-white">Gün / Tarih / Saat Seçimli Rapor Filtresi</div>
+                <span class="text-[10px] text-brand-amber font-mono">Saatlik Hassasiyet</span>
+              </div>
+
+              <!-- Date Time Pickers -->
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label class="text-[10px] text-brand-textMuted block mb-1">Başlangıç:</label>
+                  <input type="datetime-local" id="repStartDate" value="2026-09-01T00:00" class="w-full bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-[11px] font-mono">
+                </div>
+                <div>
+                  <label class="text-[10px] text-brand-textMuted block mb-1">Bitiş:</label>
+                  <input type="datetime-local" id="repEndDate" value="2026-09-08T23:59" class="w-full bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-[11px] font-mono">
+                </div>
+              </div>
+
+              <!-- Hızlı Seçim Butonları -->
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                <button onclick="setReportFilterPreset('bugun')" id="btnRepBugun" class="px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300">Bugün</button>
+                <button onclick="setReportFilterPreset('7gun')" id="btnRep7gun" class="px-3 py-1 rounded-full text-[10px] font-bold bg-brand-amber text-slate-950">Son 7 Gün</button>
+                <button onclick="setReportFilterPreset('30gun')" id="btnRep30gun" class="px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300">Son 30 Gün</button>
+                <button onclick="calculateCustomReport()" class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white ml-auto flex items-center gap-1">
+                  <span>Raporu Oluştur</span>
+                </button>
+              </div>
+
+              <!-- Seçili Aralık Özeti -->
+              <div class="text-[11px] text-brand-textMuted font-mono pt-1 border-t border-brand-border/40">
+                Seçili Aralık: <span id="reportRangeLabel" class="text-slate-200">01.09.2026 00:00 - 08.09.2026 23:59</span>
+              </div>
+            </div>
+
+            <!-- Kapsamlı Rapor Özeti (Sayfa 3 Birebir) -->
+            <div class="bg-brand-surface border border-brand-border rounded-2xl p-3.5 shadow-sm space-y-3">
+              <div class="text-xs font-bold text-white uppercase tracking-wider">Tüketim & Akış Özeti</div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <!-- Toplam Gaz Akışı -->
+                <div class="bg-brand-bg rounded-xl p-2.5 border border-brand-border">
+                  <div class="text-[10px] text-brand-textMuted">Toplam Gaz Akışı</div>
+                  <div class="text-base font-extrabold text-white mt-0.5">
+                    <span id="repTotalGas">68.520</span> <span class="text-[10px] font-normal text-brand-textDim">m³</span>
+                  </div>
+                </div>
+
+                <!-- Toplam Tüketim -->
+                <div class="bg-brand-bg rounded-xl p-2.5 border border-brand-border">
+                  <div class="text-[10px] text-brand-textMuted">Toplam Kimyasal Tüketimi</div>
+                  <div class="text-base font-extrabold text-white mt-0.5">
+                    <span id="repTotalConsumption">15.567</span> <span class="text-[10px] font-normal text-brand-textDim">kg</span>
+                  </div>
+                </div>
+
+                <!-- Ort. Enjeksiyon -->
+                <div class="bg-brand-bg rounded-xl p-2.5 border border-brand-border">
+                  <div class="text-[10px] text-brand-textMuted">Ort. Enjeksiyon</div>
+                  <div class="text-base font-extrabold text-white mt-0.5">
+                    <span id="repAvgInj">18.68</span> <span class="text-[10px] font-normal text-brand-textDim">gr/strk</span>
+                  </div>
+                </div>
+
+                <!-- Toplam Alarm -->
+                <div class="bg-brand-bg rounded-xl p-2.5 border border-brand-border">
+                  <div class="text-[10px] text-brand-textMuted">Toplam Alarm</div>
+                  <div class="text-base font-extrabold text-white mt-0.5">
+                    <span id="repTotalAlarm">7</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pompa Strok Sayısı ve Çalışma Saatleri (Sayfa 3 Gereksinimi) -->
+              <div class="pt-2 border-t border-brand-border/50 space-y-1.5 text-xs">
+                <div class="text-[11px] font-bold text-white uppercase tracking-wider">Pompa Strok & Performans Analizi</div>
+                <div class="space-y-1 text-[11px]">
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Pompa 1 Strok Sayısı:</span>
+                    <span id="repP1Strokes" class="font-bold text-emerald-400 font-mono">1.842.190 Strok (109.2 saat)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Pompa 2 Strok Sayısı:</span>
+                    <span id="repP2Strokes" class="font-bold text-slate-300 font-mono">920.450 Strok (54.6 saat)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Toplam Pompa Vuruş Adedi:</span>
+                    <span id="repTotalStrokes" class="font-bold text-white font-mono">2.762.640 Strok</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Pompa Değişim Sayısı:</span>
+                    <span id="repPumpSwitchCount" class="font-bold text-brand-amber font-mono">4</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tank Seviye Değişimi Raporu (Sayfa 3 Gereksinimi) -->
+              <div class="pt-2 border-t border-brand-border/50 space-y-1.5 text-xs">
+                <div class="text-[11px] font-bold text-white uppercase tracking-wider">Tank Seviye Değişimi (ΔL)</div>
+                <div class="space-y-1 text-[11px]">
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Tank Başlangıç Seviyesi:</span>
+                    <span id="repTankStart" class="font-bold text-white font-mono">1982.3 L</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Tank Bitiş Seviyesi:</span>
+                    <span id="repTankEnd" class="font-bold text-white font-mono">1968.4 L</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Tank Net Seviye Değişimi:</span>
+                    <span id="repTankDelta" class="font-bold text-rose-400 font-mono">-13.9 L (Tüketilen)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Alarm Analizi -->
+              <div class="pt-2 border-t border-brand-border/50 space-y-1.5 text-xs">
+                <div class="text-[11px] font-bold text-white uppercase tracking-wider">Alarm Analizi & Özet</div>
+                <div class="space-y-1 text-[11px]">
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Kritik Alarm Adedi:</span>
+                    <span id="repCriticalAlarms" class="font-bold text-rose-400 font-mono">2</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Uyarı Alarm Adedi:</span>
+                    <span id="repWarningAlarms" class="font-bold text-brand-amber font-mono">4</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-brand-textMuted">Toplam Alarm Süresi:</span>
+                    <span id="repTotalAlarmDuration" class="font-bold text-white font-mono">154 dk</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2 AYRI PDF / RAPOR İNDİRME BUTONLARI (Sayfa 3 Birebir) -->
+              <div class="pt-3 border-t border-brand-border/50 space-y-2">
+                <!-- Rapor 1: Resmi EPDK Raporu -->
+                <button onclick="openModal('modalEPDK')" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition shadow">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                  <span>1. Resmi EPDK Denetim Raporu (Ayrı PDF)</span>
+                </button>
+
+                <!-- Rapor 2: Detaylı Tüketim & Saha Teknik Raporu -->
+                <button onclick="openModal('modalTechnicalReport')" class="w-full py-2.5 bg-brand-surface hover:bg-brand-card border border-brand-border text-sky-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition shadow">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <span>2. Detaylı Periyodik Tüketim Raporu (Ayrı PDF)</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+
+          <!-- ============================================== -->
+          <!-- BOTTOM NAVIGATION BAR (Exact match from Screenshots) -->
+          <!-- ============================================== -->
+          <div class="h-16 bg-[#0c1a20]/95 backdrop-blur border-t border-brand-border/60 px-2 flex items-center justify-around fixed bottom-0 left-0 right-0 z-20 select-none">
+            <!-- 1. Dashboard -->
+            <button onclick="switchTab('dashboard')" id="navBtnDashboard" class="flex flex-col items-center justify-center w-14 py-1 transition-all">
+              <div id="navPillDashboard" class="px-4 py-1 rounded-full bg-emerald-400 text-slate-950 font-bold transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+              </div>
+              <span class="text-[10px] text-white font-medium mt-0.5">Dashboard</span>
+            </button>
+
+            <!-- 2. Canli -->
+            <button onclick="switchTab('canli')" id="navBtnCanli" class="flex flex-col items-center justify-center w-14 py-1 transition-all">
+              <div id="navPillCanli" class="px-4 py-1 rounded-full text-brand-textMuted transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <span class="text-[10px] text-brand-textMuted font-medium mt-0.5">Canlı</span>
+            </button>
+
+            <!-- 3. Alarmlar -->
+            <button onclick="switchTab('alarmlar')" id="navBtnAlarmlar" class="flex flex-col items-center justify-center w-14 py-1 transition-all relative">
+              <div id="navPillAlarmlar" class="px-4 py-1 rounded-full text-brand-textMuted transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              </div>
+              <span class="text-[10px] text-brand-textMuted font-medium mt-0.5">Alarmlar</span>
+              <span id="navAlarmBadge" class="absolute top-1 right-2 w-4 h-4 rounded-full bg-brand-danger text-[9px] text-white font-bold flex items-center justify-center border border-brand-bg">2</span>
+            </button>
+
+            <!-- 4. Tuketim -->
+            <button onclick="switchTab('tuketim')" id="navBtnTuketim" class="flex flex-col items-center justify-center w-14 py-1 transition-all">
+              <div id="navPillTuketim" class="px-4 py-1 rounded-full text-brand-textMuted transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+              </div>
+              <span class="text-[10px] text-brand-textMuted font-medium mt-0.5">Tüketim</span>
+            </button>
+
+            <!-- 5. Grafikler -->
+            <button onclick="switchTab('grafikler')" id="navBtnGrafikler" class="flex flex-col items-center justify-center w-14 py-1 transition-all">
+              <div id="navPillGrafikler" class="px-4 py-1 rounded-full text-brand-textMuted transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              </div>
+              <span class="text-[10px] text-brand-textMuted font-medium mt-0.5">Grafikler</span>
+            </button>
+
+            <!-- 6. Raporlar -->
+            <button onclick="switchTab('raporlar')" id="navBtnRaporlar" class="flex flex-col items-center justify-center w-14 py-1 transition-all">
+              <div id="navPillRaporlar" class="px-4 py-1 rounded-full text-brand-textMuted transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </div>
+              <span class="text-[10px] text-brand-textMuted font-medium mt-0.5">Raporlar</span>
+            </button>
+          </div>
+
+        </div>
+        <!-- End Logged In Screens -->
+
+      </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- INTERACTIVE SIMULATOR DRAWER (Float Right Panel) -->
+    <!-- (Sayfa 1 & 2 Demo Uyarıları ve PLC Read-Only Kuralı) -->
+    <!-- ============================================== -->
+    <div id="simulatorDrawer" class="fixed right-0 top-12 bottom-0 w-80 sm:w-96 bg-[#0e1d24] border-l border-brand-border p-4 shadow-2xl z-40 transform translate-x-full transition-transform duration-300 overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+        <div class="flex items-center gap-2">
+          <span class="text-brand-amber font-bold text-base">⚙️</span>
+          <div>
+            <h3 class="font-bold text-white text-xs">Müşteri Sunum Simülatörü</h3>
+            <p class="text-[10px] text-brand-textMuted">Demo iş akışları ve senaryoları</p>
+          </div>
+        </div>
+        <button onclick="toggleSimulator()" class="p-1 text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 mt-3.5 text-xs">
+        
+        <!-- 1. Gaz Debisi (Read-Only PLC Uyarısı ile) -->
+        <div class="space-y-2 bg-brand-surface p-3 rounded-xl border border-brand-border">
+          <div class="flex justify-between font-medium items-center">
+            <span class="text-slate-300 font-bold text-[11px]">Gaz Debisi Simülasyonu</span>
+            <span id="simFlowDisplay" class="text-emerald-400 font-bold font-mono text-xs">9850 m³/h</span>
+          </div>
+          <input type="range" id="simFlowSlider" min="2000" max="25000" step="250" value="9850" oninput="onSimFlowChange(this.value)" class="w-full accent-brand-amber cursor-pointer">
+          <div class="flex justify-between text-[9px] text-brand-textDim font-mono">
+            <span>2.000 m³/h (Gece)</span>
+            <span>25.000 m³/h (Pik)</span>
+          </div>
+          <!-- Doküman Sayfa 1 Uyarısı: Read-Only PLC Kuralı -->
+          <div class="p-2 bg-amber-950/30 rounded-lg border border-amber-600/40 text-[10px] text-amber-300 leading-snug">
+            <strong>⚠️ Önemli Not:</strong> Gerçek sahada asıl debi verileri sayaç/PLC'den <em>Read-Only</em> olarak okunur; gerekli enjeksiyon periyodunu (562 sn) yalnızca PLC otonom hesaplar.
+          </div>
+        </div>
+
+        <!-- 2. Manuel Dozaj Vuruşu (Stroke) (Doküman Sayfa 1: Kalabilir) -->
+        <div class="p-3 bg-brand-surface rounded-xl border border-brand-border space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white text-[11px] block">Enjeksiyon Tetikle (Pompa Vuruşu)</span>
+            <span class="text-[10px] text-emerald-400 font-mono">+18.76 gr</span>
+          </div>
+          <p class="text-brand-textMuted text-[10px]">Gerçek çalışmadan pompanın basma verisinin SCADA'ya nasıl düşeceğini görmek için kullanılır.</p>
+          <button onclick="triggerManualStroke()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition active:scale-95 flex items-center justify-center gap-1.5 shadow text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>Enjeksiyon Tetikle (Stroke Vuruşu)</span>
+          </button>
+        </div>
+
+        <!-- 3. AI Soğuk Dalgası Simülasyonu (Doküman Sayfa 1 Uyarısı ile) -->
+        <div class="p-3 bg-cyan-950/30 rounded-xl border border-cyan-800/40 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-cyan-300 flex items-center gap-1 text-[11px]">
+              <span>❄️</span> <span>Soğuk Hava Dalgası Öngörüsü</span>
+            </span>
+            <span class="text-[9px] bg-cyan-900/60 text-cyan-200 px-1.5 py-0.5 rounded border border-cyan-700/50 font-mono">Demo Amaçlı</span>
+          </div>
+          <p class="text-[10px] text-slate-300 leading-snug">
+            Sıcaklık 16°C'den -2°C'ye düştüğünde tüketim sıçramasını öngörür.
+          </p>
+          <!-- Sayfa 1 Disclaimeri -->
+          <div class="p-1.5 bg-brand-bg/80 rounded border border-cyan-800/30 text-[9px] text-cyan-200/90 italic">
+            * Bu demo amaçlıdır. Canlı akışa doğrudan müdahale etmez; asıl kararı sahadaki makine ve PLC verir.
+          </div>
+          <button onclick="triggerWeatherSurge()" class="w-full py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white font-bold rounded-lg transition active:scale-95 text-xs shadow">
+            Soğuk Hava Dalgası Öngörüsünü Başlat
+          </button>
+        </div>
+
+        <!-- 4. Arıza Tetikleme (Doküman Sayfa 1: Demo Amaçlı) -->
+        <div class="p-3 bg-brand-surface rounded-xl border border-brand-border space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white text-[11px] block">Arıza Tetikleme</span>
+            <span class="text-[9px] text-rose-400 bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800 font-mono">Demo Amaçlı</span>
+          </div>
+          <p class="text-brand-textMuted text-[10px]">Pompa 1 Düşük Akış / Körük Hasarı simülasyonu başlatır ve Pompa 2'yi devreye alır.</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="simulatePumpFailure()" class="py-1.5 px-2 bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/60 text-rose-300 font-semibold rounded-lg text-center transition text-xs">
+              🚨 P1 Arıza Tetikle
+            </button>
+            <button onclick="restoreNormalSystem()" class="py-1.5 px-2 bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800/60 text-emerald-300 font-semibold rounded-lg text-center transition text-xs">
+              ✅ Normale Al
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. Tank Tetikleme (Doküman Sayfa 1: Demo Amaçlı) -->
+        <div class="p-3 bg-brand-surface rounded-xl border border-brand-border space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white text-[11px] block">Tank Tetikleme</span>
+            <span class="text-[9px] text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800 font-mono">Demo Amaçlı</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="simulateLowTank()" class="py-1.5 px-2 bg-amber-950/60 hover:bg-amber-900/80 border border-amber-800/60 text-amber-300 font-semibold rounded-lg text-center transition text-xs">
+              ⚠️ Düşük Tank (L/LL)
+            </button>
+            <button onclick="refillTank()" class="py-1.5 px-2 bg-brand-card hover:bg-brand-cardHover border border-brand-border text-slate-200 font-semibold rounded-lg text-center transition text-xs">
+              ⛽ 500 L Ekle (H/HH)
+            </button>
+          </div>
+        </div>
+
+        <!-- 6. Sound Toggle -->
+        <div class="p-2.5 bg-brand-surface rounded-xl border border-brand-border flex items-center justify-between">
+          <span class="text-[11px] font-bold text-white">Ses Efektleri</span>
+          <button id="btnAudioToggle" onclick="toggleAudio()" class="px-2.5 py-1 rounded bg-brand-amber text-slate-950 text-[10px] font-bold">
+            Açık 🔊
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ============================================== -->
+  <!-- SANAL WHATSAPP / PUSH BİLDİRİM KARTI -->
+  <!-- ============================================== -->
+  <div id="waPopup" class="fixed top-14 right-4 sm:right-8 w-80 sm:w-96 bg-[#1f2c34] text-white rounded-2xl p-3.5 wa-notification border border-emerald-500/50 z-50 transform -translate-y-40 opacity-0 pointer-events-none transition-all duration-500">
+    <div class="flex items-center justify-between pb-2 border-b border-white/10">
+      <div class="flex items-center space-x-2">
+        <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center font-black text-xs text-black">WA</div>
+        <span class="font-bold text-xs text-emerald-400">WhatsApp SCADA Dispatcher</span>
+      </div>
+      <span class="text-[10px] text-slate-400">Şimdi</span>
+    </div>
+    <div class="mt-2 space-y-1">
+      <div class="text-xs font-bold text-rose-400 flex items-center gap-1">
+        <span>🚨 [ACİL ALARM]</span> <span id="waStationTitle">İZMİRGAZ SAHA 01 - Bornova</span>
+      </div>
+      <p id="waMsgText" class="text-[11px] text-slate-200 leading-snug">
+        Pompa 1 Düşük Akış tespit edildi! Pompa 2 otomatik devreye alındı. Nöbetçi mühendis teyidi bekleniyor.
+      </p>
+    </div>
+    <div class="mt-2.5 pt-2 border-t border-white/10 flex gap-2">
+      <button onclick="dismissWaNotification(true)" class="flex-1 py-1 bg-emerald-600 hover:bg-emerald-500 rounded text-[11px] font-bold text-white transition">
+        ✓ Onayla (Ack)
+      </button>
+      <button onclick="dismissWaNotification(false)" class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-[11px] text-slate-300">
+        Kapat
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- MODAL 1: GIS ÇOKLU İSTASYON FİLO HARİTASI (Sayfa 2: Kimyasal Lojistiği) -->
+  <!-- ============================================== -->
+  <div id="modalGIS" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-brand-surface border border-brand-border rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="p-3.5 border-b border-brand-border flex items-center justify-between bg-brand-bg">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🗺️</span>
+          <div>
+            <h2 class="text-sm font-bold text-white">İzmirgaz Filo Kokulandırma & Kimyasal Lojistiği Haritası</h2>
+            <p class="text-[10px] text-brand-textMuted">Tüm RMS-A istasyonları, hat sonu koku gradyanı ve kimyasal ikmal yönetimi</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalGIS')" class="p-1 text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Map Body (Revizyon: 4 İzmirgaz Sahası) -->
+      <div class="p-4 flex-1 overflow-y-auto space-y-3 text-xs">
+        <div class="bg-[#081216] border border-brand-border rounded-2xl p-3 relative overflow-hidden h-72 flex items-center justify-center">
+          <svg class="w-full h-full" viewBox="0 0 700 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 70 Q 150 130 220 190 T 180 280 H 0 Z" fill="#0b2431" fill-opacity="0.5"/>
+            <text x="60" y="230" fill="#204150" font-size="13" font-weight="bold">İZMİR KÖRFEZİ</text>
+
+            <!-- Gas Pipeline Grid -->
+            <path d="M500 20 L 420 80 L 320 140 L 260 200 L 190 250" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+            <path d="M420 80 L 520 120 L 590 190" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6,4"/>
+            <path d="M320 140 L 390 220" stroke="#f59e0b" stroke-width="3"/>
+
+            <!-- Saha 1: Bornova -->
+            <g class="cursor-pointer" onclick="selectStationFromGIS('İZMİRGAZ SAHA 01 - Bornova')">
+              <circle cx="420" cy="80" r="16" fill="#10b981" fill-opacity="0.25" class="animate-ping"/>
+              <circle cx="420" cy="80" r="9" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
+              <text x="420" y="60" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">SAHA 01 - Bornova</text>
+              <text x="420" y="102" fill="#34d399" font-size="8" text-anchor="middle">12.0 mg/m³ | 9850 m³/h</text>
+            </g>
+
+            <!-- Saha 2: Torbalı -->
+            <g class="cursor-pointer" onclick="selectStationFromGIS('İZMİRGAZ SAHA 02 - Torbalı')">
+              <circle cx="390" cy="220" r="8" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+              <text x="390" y="240" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">SAHA 02 - Torbalı</text>
+              <text x="390" y="253" fill="#fbbf24" font-size="8" text-anchor="middle">Tank: %22 (Lojistik Gerek)</text>
+            </g>
+
+            <!-- Saha 3: Aliağa -->
+            <g class="cursor-pointer" onclick="selectStationFromGIS('İZMİRGAZ SAHA 03 - Aliağa')">
+              <circle cx="260" cy="200" r="8" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
+              <text x="260" y="185" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">SAHA 03 - Aliağa</text>
+              <text x="260" y="222" fill="#34d399" font-size="8" text-anchor="middle">11.9 mg/m³ | Normal</text>
+            </g>
+
+            <!-- Saha 4: Pınarbaşı -->
+            <g class="cursor-pointer" onclick="selectStationFromGIS('İZMİRGAZ SAHA 04 - Pınarbaşı')">
+              <circle cx="500" cy="25" r="8" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+              <text x="500" y="45" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">SAHA 04 - Pınarbaşı</text>
+              <text x="500" y="15" fill="#38bdf8" font-size="8" text-anchor="middle">12.1 mg/m³ | Giriş</text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Station Summary Cards (Sayfa 2: Kimyasal Lojistiği) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div class="p-3 bg-brand-bg rounded-xl border border-brand-border">
+            <span class="text-brand-textMuted block text-[10px]">Toplam Dağıtılan Gaz</span>
+            <span class="text-base font-extrabold text-white">42.850 m³/h</span>
+            <span class="text-[9px] text-emerald-400 block mt-0.5">4 Saha İstasyonu Aktif</span>
+          </div>
+          <div class="p-3 bg-brand-bg rounded-xl border border-brand-border">
+            <span class="text-brand-textMuted block text-[10px]">Ortalama Koku Seviyesi</span>
+            <span class="text-base font-extrabold text-white">12.04 mg/m³</span>
+            <span class="text-[9px] text-emerald-400 block mt-0.5">EPDK Standartlarına Uyumlu</span>
+          </div>
+          <div class="p-3 bg-brand-bg rounded-xl border border-brand-border">
+            <span class="text-brand-textMuted block text-[10px]">Kimyasal Lojistiği İkmal Planı</span>
+            <span class="text-base font-extrabold text-amber-400">SAHA 02 (Torbalı)</span>
+            <span class="text-[9px] text-brand-textDim block mt-0.5">Kalan: 14 Gün (1200L Dolum Talebi)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- MODAL 2: KESTİRİMCİ BAKIM (Sayfa 3: Körük, 1 Yıllık Sezonluk Algoritma, Bakım Logu) -->
+  <!-- ============================================== -->
+  <div id="modalAI" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-brand-surface border border-brand-border rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="p-3.5 border-b border-brand-border flex items-center justify-between bg-brand-bg">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🤖</span>
+          <div>
+            <h2 class="text-sm font-bold text-white">Kestirimci Bakım & Pompa Körük Takibi</h2>
+            <p class="text-[10px] text-brand-textMuted">Strok Sayısı Geri Bildirimi, Sezonluk Akış Analizi & Bakım Günlüğü</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalAI')" class="p-1 text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-3.5 text-xs">
+        
+        <!-- Öngörülen Konsantrasyon (Müdahale Kapalı - Read Only Hesaplama) -->
+        <div class="p-3 bg-brand-bg rounded-xl border border-brand-border flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="text-[10px] text-brand-textMuted block font-bold uppercase">Öngörülen Konsantrasyon (Hesaplanan)</span>
+            <span class="text-base font-black text-brand-amber font-mono">12.0 mg/m³</span>
+          </div>
+          <div class="text-right">
+            <span class="px-2 py-0.5 rounded bg-brand-card text-[10px] text-slate-300 font-mono border border-brand-border">
+              🔒 Müdahale Kapalı (Salt Okunur)
+            </span>
+            <span class="text-[9px] text-brand-textDim block mt-0.5">PLC hedef dozajı debiye göre otonom belirler</span>
+          </div>
+        </div>
+
+        <!-- 1 Yıllık Sezonluk Bakım Tavsiyesi & Sezon Algoritması (Sayfa 3) -->
+        <div class="p-3.5 bg-gradient-to-r from-emerald-950/60 to-brand-surface rounded-2xl border border-emerald-800/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-emerald-300 flex items-center gap-1.5 text-xs">
+              <span>📅</span> <span>1 Yıllık Sezonluk Bakım Periyodu & Akıllı Tavsiye</span>
+            </span>
+            <span class="text-[10px] bg-emerald-900/60 text-emerald-200 px-2 py-0.5 rounded border border-emerald-700/50 font-mono">Kış Öncesi Dönem</span>
+          </div>
+          <p class="text-[11px] text-slate-200 leading-relaxed">
+            Makinelerin ve dozaj pompalarının periyodik bakım döngüsü <strong>1 yıldır</strong>. Bakımlar sahada genellikle yazın düşük tüketim aylarında veya kış öncesi pik tüketim sezonuna girmeden önce gerçekleştirilir.
+          </p>
+          <div class="p-2.5 bg-brand-bg/80 rounded-xl border border-emerald-700/40 flex items-center justify-between text-[11px]">
+            <div>
+              <span class="text-brand-amber font-bold block">💡 Kestirimci Bakım Tavsiyesi:</span>
+              <span class="text-slate-300">Pompa 1 yıllık 1.84M strok hacmine ulaştı. Kış pik debisi öncesinde <strong>körük ve conta revizyonu yapılması</strong> önerilir.</span>
+            </div>
+            <span class="text-xs font-mono font-bold text-emerald-400 shrink-0 ml-3">Kalan: 42 Gün</span>
+          </div>
+        </div>
+
+        <!-- Pompa 1 Körük Sağlığı & Strok Takibi (Sayfa 3 Birebir) -->
+        <div class="p-3.5 bg-brand-bg rounded-2xl border border-brand-border space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white uppercase tracking-wider text-[11px]">Pompa 1 Körük Sağlık İndeksi (Strok Tabanlı)</span>
+            <span class="text-emerald-400 font-bold font-mono text-xs">%94 (Mükemmel)</span>
+          </div>
+          <div class="w-full bg-brand-surface rounded-full h-2 border border-brand-border overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full" style="width: 94%"></div>
+          </div>
+          <div class="divide-y divide-brand-border/40 text-[11px]">
+            <div class="flex justify-between py-1.5">
+              <span class="text-brand-textMuted">Pompa Toplam Strok Sayısı:</span>
+              <span class="font-mono text-white font-bold">1.842.190 Strok</span>
+            </div>
+            <div class="flex justify-between py-1.5">
+              <span class="text-brand-textMuted">Körük Hasarı / Patlak Teşhis Mantığı:</span>
+              <span class="font-mono text-emerald-300">Normal (Enjeksiyon: 18.76 gr &gt; Eşik 0.5 gr)</span>
+            </div>
+            <div class="flex justify-between py-1.5">
+              <span class="text-brand-textMuted">Teşhis Algoritması:</span>
+              <span class="text-brand-textDim text-[10px]">Strok vuruşunda FM ölçümü 0 civarına düşerse anında "Körük Patlağı" alarmı tetiklenir.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bakım Defteri & Parça Değişim Kayıtları (Sayfa 3 Birebir) -->
+        <div class="p-3.5 bg-brand-bg rounded-2xl border border-brand-border space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs">Bakım Yapılan Tarihler & Değişen Parça Günlüğü</span>
+            <button onclick="openNewMaintenanceModal()" class="px-2 py-0.5 rounded bg-brand-amber text-slate-950 font-bold text-[10px]">
+              + Yeni Bakım Kaydı
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[11px]">
+              <thead>
+                <tr class="border-b border-brand-border text-brand-textMuted font-mono text-[10px]">
+                  <th class="py-1">Tarih</th>
+                  <th class="py-1">Yapılan İşlem / Değişen Parça</th>
+                  <th class="py-1">Teknisyen</th>
+                  <th class="py-1 text-right">Durum</th>
+                </tr>
+              </thead>
+              <tbody id="maintenanceLogTbody" class="divide-y divide-brand-border/30 font-mono">
+                <tr>
+                  <td class="py-1.5 text-slate-300">25.07.2026</td>
+                  <td class="py-1.5 text-white">Pompa 1 Körük & Conta Takımı Değişimi (Yaz Bakımı)</td>
+                  <td class="py-1.5 text-brand-textMuted">M. Kaya</td>
+                  <td class="py-1.5 text-right text-emerald-400">Tamamlandı</td>
+                </tr>
+                <tr>
+                  <td class="py-1.5 text-slate-300">14.04.2026</td>
+                  <td class="py-1.5 text-white">FM Flowmetre Sensör Kalibrasyonu</td>
+                  <td class="py-1.5 text-brand-textMuted">A. Yılmaz</td>
+                  <td class="py-1.5 text-right text-emerald-400">Tamamlandı</td>
+                </tr>
+                <tr>
+                  <td class="py-1.5 text-slate-300">10.11.2025</td>
+                  <td class="py-1.5 text-white">Kış Öncesi Yıllık Revizyon & Yağ Değişimi</td>
+                  <td class="py-1.5 text-brand-textMuted">C. Demir</td>
+                  <td class="py-1.5 text-right text-emerald-400">Tamamlandı</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- MODAL 3: 3D SKID KONTEYNER İKİZİ (Yatay Tank, 4 Bar, Oklar Sağa, FM Flowmetre) -->
+  <!-- ============================================== -->
+  <div id="modalSkid" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-brand-surface border border-brand-border rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="p-3.5 border-b border-brand-border flex items-center justify-between bg-brand-bg">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🏭</span>
+          <div>
+            <h2 class="text-sm font-bold text-white">ATEX Zone 1 Kokulandırma Skid Konteyneri (Dijital İkiz)</h2>
+            <p class="text-[10px] text-brand-textMuted">Kabin içi bileşenleri tıklayarak telemetri değerlerini inceleyin</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalSkid')" class="p-1 text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-3 text-xs">
+        <div class="bg-[#09151c] border border-brand-border rounded-2xl p-3 relative overflow-hidden flex items-center justify-center">
+          <svg class="w-full h-72" viewBox="0 0 650 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Enclosure Room -->
+            <rect x="30" y="25" width="590" height="250" rx="14" fill="#0f242e" stroke="#2a5568" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="50" y="45" fill="#64748b" font-size="10" font-weight="bold">ATEX EX-PROOF İZOLASYONLU DOZAJ KONTEYNERİ</text>
+
+            <!-- 1. YATAY THT TANKI (4.0 bar, LL/L/H/HH Sinyalleri) -->
+            <g class="cursor-pointer" onclick="showSkidInfo('tank')">
+              <rect x="50" y="90" width="170" height="110" rx="18" fill="#14313f" stroke="#38bdf8" stroke-width="2"/>
+              <rect x="55" y="125" width="160" height="70" rx="12" fill="#0d9488" fill-opacity="0.45"/>
+              <text x="135" y="145" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">YATAY THT TANKI</text>
+              <text x="135" y="165" fill="#2dd4bf" font-size="11" font-weight="extrabold" text-anchor="middle">1979 L (%79)</text>
+              <text x="135" y="183" fill="#f59e0b" font-size="9" text-anchor="middle">Basınç: 4.0 bar | 18.5 °C</text>
+            </g>
+
+            <!-- Pipe from tank to pump cabin -->
+            <path d="M220 145 H 280" stroke="#0d9488" stroke-width="4"/>
+
+            <!-- 2. POMPA 1 (Oklar Sağa Doğru: '>') -->
+            <g class="cursor-pointer" onclick="showSkidInfo('pump1')">
+              <rect x="280" y="70" width="105" height="65" rx="8" fill="#163945" stroke="#22c55e" stroke-width="2"/>
+              <circle cx="332" cy="98" r="16" fill="#22c55e" fill-opacity="0.25"/>
+              <polygon points="325,90 342,98 325,106" fill="#22c55e"/>
+              <text x="332" y="125" fill="#4ade80" font-size="9" font-weight="bold" text-anchor="middle">POMPA 1 (Aktif &gt;)</text>
+            </g>
+
+            <!-- 3. POMPA 2 (Oklar Sağa Doğru: '>') -->
+            <g class="cursor-pointer" onclick="showSkidInfo('pump2')">
+              <rect x="280" y="165" width="105" height="65" rx="8" fill="#14262f" stroke="#64748b" stroke-width="1.5"/>
+              <circle cx="332" cy="193" r="16" fill="#64748b" fill-opacity="0.2"/>
+              <polygon points="325,185 342,193 325,201" fill="#64748b"/>
+              <text x="332" y="220" fill="#94a3b8" font-size="9" text-anchor="middle">POMPA 2 (Yedek &gt;)</text>
+            </g>
+
+            <!-- Pipe from pumps to FM -->
+            <path d="M385 102 H 415 V 145 H 430" stroke="#0d9488" stroke-width="3"/>
+            <path d="M385 198 H 415 V 145" stroke="#475569" stroke-width="2"/>
+
+            <!-- 4. FLOWMETRE (FM) - 2 Pompanın Sağında -->
+            <g class="cursor-pointer" onclick="showSkidInfo('fm')">
+              <rect x="430" y="115" width="65" height="60" rx="8" fill="#1b3644" stroke="#38bdf8" stroke-width="2"/>
+              <rect x="435" y="122" width="55" height="20" rx="4" fill="#081820"/>
+              <text x="462" y="136" fill="#38bdf8" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">18.76</text>
+              <text x="462" y="157" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">FM</text>
+              <text x="462" y="167" fill="#8da2ac" font-size="7" text-anchor="middle">Flowmetre</text>
+            </g>
+
+            <!-- Pipe from FM out of Cabinet to Gas Line -->
+            <path d="M495 145 H 540" stroke="#0d9488" stroke-width="4"/>
+
+            <!-- 5. ANA DOĞALGAZ BORU HATTI -->
+            <g class="cursor-pointer" onclick="showSkidInfo('gasline')">
+              <rect x="540" y="50" width="55" height="205" rx="8" fill="#334155" fill-opacity="0.4" stroke="#f59e0b" stroke-width="2"/>
+              <text x="567" y="42" fill="#f5a623" font-size="9" font-weight="bold" text-anchor="middle">DOĞALGAZ HATTI</text>
+              <path d="M540 145 L 565 145" stroke="#22c55e" stroke-width="3"/>
+              <circle cx="567" cy="145" r="4" fill="#22c55e" class="animate-ping"/>
+            </g>
+          </svg>
+        </div>
+
+        <div id="skidInfoBox" class="p-3 bg-brand-bg rounded-xl border border-brand-border flex items-center justify-between">
+          <div>
+            <span id="skidInfoTitle" class="font-bold text-white text-xs">Yatay THT Ana Depolama Tankı</span>
+            <p id="skidInfoDesc" class="text-brand-textMuted text-[10px] mt-0.5">2500 Litre kapasiteli, 316L paslanmaz çelik, 4.0 bar Azot (N₂) basınçlı yatay tank.</p>
+          </div>
+          <span id="skidInfoBadge" class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-mono">4.0 bar | 1979 L</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- MODAL 4: KOKU ÖLÇÜMÜ KAYDI (Sayfa 2: Eski Burun Testi - Cihaz Marka/Model, Son Kalibrasyon) -->
+  <!-- ============================================== -->
+  <div id="modalSniff" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-brand-surface border border-brand-border rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="p-3.5 border-b border-brand-border flex items-center justify-between bg-brand-bg">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">👃</span>
+          <div>
+            <h2 class="text-sm font-bold text-white">Koku Ölçümü Kaydı (Saha Ölçüm Cihazı)</h2>
+            <p class="text-[10px] text-brand-textMuted">Cihazla belirli noktalardan alınan koku ölçümlerinin SCADA'ya işlenmesi</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalSniff')" class="p-1 text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-3.5 text-xs">
+        <!-- New Entry Form -->
+        <div class="p-3.5 bg-brand-bg rounded-2xl border border-brand-border space-y-3">
+          <span class="font-bold text-white text-xs block">Yeni Koku Ölçüm Değeri Girişi</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="text-brand-textMuted text-[10px] block mb-1">Cihaz Marka / Modeli:</label>
+              <input type="text" id="sniffDeviceModel" value="Jerome J605 / Odorometer" class="w-full bg-brand-surface border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-xs">
+            </div>
+            <div>
+              <label class="text-brand-textMuted text-[10px] block mb-1">Son Kalibrasyon Tarihi:</label>
+              <input type="date" id="sniffCalibDate" value="2026-08-15" class="w-full bg-brand-surface border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-xs font-mono">
+            </div>
+            <div>
+              <label class="text-brand-textMuted text-[10px] block mb-1">Ölçüm Noktası:</label>
+              <input type="text" id="sniffLocation" value="Bornova Evka-3 Hat Sonu" class="w-full bg-brand-surface border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-xs">
+            </div>
+            <div>
+              <label class="text-brand-textMuted text-[10px] block mb-1">Ölçülen Koku Değeri (mg/m³):</label>
+              <input type="number" step="0.1" id="sniffValue" value="12.2" class="w-full bg-brand-surface border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-xs font-mono">
+            </div>
+          </div>
+          <button onclick="submitSniffRecord()" class="w-full py-2 bg-brand-amber hover:bg-brand-amberDark text-slate-950 font-bold rounded-xl transition shadow text-xs">
+            + Koku Ölçümünü Sisteme Kaydet
+          </button>
+        </div>
+
+        <!-- Recent Records Table -->
+        <div class="p-3.5 bg-brand-bg rounded-2xl border border-brand-border space-y-2">
+          <span class="font-bold text-white text-xs block">Sistemdeki Son Koku Ölçüm Kayıtları</span>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[11px]">
+              <thead>
+                <tr class="border-b border-brand-border text-brand-textMuted font-mono text-[10px]">
+                  <th class="py-1">Lokasyon</th>
+                  <th class="py-1">Cihaz</th>
+                  <th class="py-1">Son Kalibrasyon</th>
+                  <th class="py-1 text-right">Ölçülen</th>
+                </tr>
+              </thead>
+              <tbody id="sniffLogTbody" class="divide-y divide-brand-border/30 font-mono">
+                <tr>
+                  <td class="py-1.5 text-white">Bornova Evka-3</td>
+                  <td class="py-1.5 text-slate-300">Jerome J605</td>
+                  <td class="py-1.5 text-brand-textMuted">15.08.2026</td>
+                  <td class="py-1.5 text-right text-emerald-400 font-bold">12.2 mg/m³</td>
+                </tr>
+                <tr>
+                  <td class="py-1.5 text-white">Torbalı Sanayi Çıkışı</td>
+                  <td class="py-1.5 text-slate-300">Gazocorr 3</td>
+                  <td class="py-1.5 text-brand-textMuted">20.07.2026</td>
+                  <td class="py-1.5 text-right text-emerald-400 font-bold">11.8 mg/m³</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- MODAL 5: RESMİ EPDK DENETİM RAPORU (Sayfa 3 Ayrı PDF) -->
+  <!-- ============================================== -->
+  <div id="modalEPDK" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-white text-slate-900 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl font-sans">
+      <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center gap-2">
+          <span class="text-rose-600 font-bold text-base">📄</span>
+          <div>
+            <h2 class="text-xs font-bold text-slate-900">EPDK Doğalgaz Kokulandırma Resmi Denetim Tutanağı</h2>
+            <p class="text-[10px] text-slate-500">Mevzuat Uyumlu Sertifikasyon Belgesi</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalEPDK')" class="p-1 text-slate-400 hover:text-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 flex-1 overflow-y-auto space-y-3.5 text-xs bg-slate-50">
+        <div class="border-b-2 border-slate-900 pb-2.5 flex justify-between items-center">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <img src="assets/machsoft-logo.jpg" alt="MachSoft" class="h-5 object-contain invert" onerror="this.style.display='none'">
+              <span class="text-[10px] font-bold text-slate-600">MachSoft SCADA Telemetri</span>
+            </div>
+            <h1 class="text-sm font-black tracking-tight text-slate-900 uppercase">T.C. ENERJİ PİYASASI DÜZENLEME KURUMU (EPDK)</h1>
+            <p class="text-[11px] text-slate-600 font-semibold">Doğal Gaz Dağıtım Şebekesi Aylık Kokulandırma Denetim Raporu</p>
+          </div>
+          <div class="text-right font-mono text-[9px] text-slate-500">
+            <div>Belge No: EPDK-KK-2026/089</div>
+            <div>Tarih: 08.09.2026</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm text-center">
+          <div>
+            <span class="text-slate-500 text-[9px] block">İstasyon Adı</span>
+            <span class="font-bold text-slate-900 text-xs">İZMİRGAZ SAHA 01</span>
+          </div>
+          <div>
+            <span class="text-slate-500 text-[9px] block">Toplam Dağıtılan Gaz</span>
+            <span class="font-bold text-slate-900 text-xs">68.520 m³</span>
+          </div>
+          <div>
+            <span class="text-slate-500 text-[9px] block">THT Sarfiyatı</span>
+            <span class="font-bold text-slate-900 text-xs">15.567 kg</span>
+          </div>
+          <div>
+            <span class="text-slate-500 text-[9px] block">Ort. Konsantrasyon</span>
+            <span class="font-bold text-emerald-600 text-xs">12.08 mg/m³</span>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-3 space-y-1">
+          <div class="flex items-center gap-1.5 text-emerald-800 font-bold text-xs">
+            <span>✓</span> <span>EPDK Mevzuatı Uygunluk Onayı</span>
+          </div>
+          <p class="text-emerald-700 text-[10px] leading-relaxed">
+            İncelenen dönem boyunca kokulandırma konsantrasyonu TS EN ISO 13734 ve EPDK sınırları (10 - 20 mg/Nm³) içerisinde %99.8 süreyle kalmış olup herhangi bir koku kesintisi yaşanmamıştır.
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-between items-end">
+          <div class="space-y-1">
+            <span class="text-[9px] text-slate-400 block font-mono">Doğrulama Kodu: SHA256-a94f8e...</span>
+            <div class="w-12 h-12 border border-slate-300 rounded flex items-center justify-center bg-white text-[8px] font-mono text-slate-400">
+              [QR KOD]
+            </div>
+          </div>
+          <div class="text-right space-y-0.5">
+            <span class="text-[10px] font-bold text-slate-800 block">SCADA Operasyon Direktörü</span>
+            <span class="text-[9px] text-slate-500 block">Elektronik İmzalıdır</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-white border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="window.print()" class="px-4 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition">
+          🖨️ Yazdır / PDF İndir
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- MODAL 6: DETAYLI PERİYODİK TÜKETİM RAPORU (Sayfa 3 İkinci Ayrı PDF) -->
+  <!-- ============================================== -->
+  <div id="modalTechnicalReport" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-white text-slate-900 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl font-sans">
+      <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center gap-2">
+          <span class="text-sky-600 font-bold text-base">📑</span>
+          <div>
+            <h2 class="text-xs font-bold text-slate-900">Detaylı Tüketim & Saha Teknik Operasyon Raporu</h2>
+            <p class="text-[10px] text-slate-500">Pompa Strok, Tank Değişimi & Saatlik Tüketim Dökümü</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalTechnicalReport')" class="p-1 text-slate-400 hover:text-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 flex-1 overflow-y-auto space-y-3.5 text-xs bg-slate-50 font-sans">
+        <div class="border-b-2 border-slate-900 pb-2.5 flex justify-between items-center">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <img src="assets/machsoft-logo.jpg" alt="MachSoft" class="h-5 object-contain invert" onerror="this.style.display='none'">
+              <span class="text-[10px] font-bold text-slate-700">MachSoft Mühendislik & Otomasyon</span>
+            </div>
+            <h1 class="text-sm font-black tracking-tight text-slate-900">SAHA PERİYODİK TÜKETİM & EKİPMAN ANALİZ RAPORU</h1>
+            <p class="text-[11px] text-slate-600 font-mono">Tesis: İZMİRGAZ SAHA 01 - Bornova | Dönem: 01.09.2026 - 08.09.2026</p>
+          </div>
+          <div class="text-right font-mono text-[9px] text-slate-500">
+            <div>Rapor ID: TR-2026-0908</div>
+            <div>Basım: 08.09.2026 21:00</div>
+          </div>
+        </div>
+
+        <!-- Ekipman ve Strok Metrikleri -->
+        <div class="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-slate-200">
+          <div>
+            <span class="text-slate-500 text-[10px] block">Pompa 1 Toplam Strok</span>
+            <span class="font-bold text-slate-900 text-xs font-mono">1.842.190 Strok</span>
+          </div>
+          <div>
+            <span class="text-slate-500 text-[10px] block">Pompa 2 Toplam Strok</span>
+            <span class="font-bold text-slate-900 text-xs font-mono">920.450 Strok</span>
+          </div>
+          <div>
+            <span class="text-slate-500 text-[10px] block">Toplam Pompa Strok Sayısı</span>
+            <span class="font-bold text-emerald-600 text-xs font-mono">2.762.640 Strok</span>
+          </div>
+          <div class="pt-2 border-t border-slate-100">
+            <span class="text-slate-500 text-[10px] block">Tank Başlangıç Seviyesi</span>
+            <span class="font-bold text-slate-900 text-xs font-mono">1982.3 L</span>
+          </div>
+          <div class="pt-2 border-t border-slate-100">
+            <span class="text-slate-500 text-[10px] block">Tank Bitiş Seviyesi</span>
+            <span class="font-bold text-slate-900 text-xs font-mono">1968.4 L</span>
+          </div>
+          <div class="pt-2 border-t border-slate-100">
+            <span class="text-slate-500 text-[10px] block">Tank Seviye Değişimi (ΔL)</span>
+            <span class="font-bold text-rose-600 text-xs font-mono">-13.9 L (Tüketim)</span>
+          </div>
+        </div>
+
+        <!-- Saatlik Döküm Örnek Tablosu -->
+        <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+          <span class="font-bold text-slate-900 text-xs block">Dönemsel Saatlik Tüketim Dökümü (Özet Satırlar)</span>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[10px] font-mono">
+              <thead class="border-b border-slate-200 text-slate-500">
+                <tr>
+                  <th class="py-1">Saat Dilimi</th>
+                  <th class="py-1">Gaz Debisi (m³/h)</th>
+                  <th class="py-1">Tüketim (kg)</th>
+                  <th class="py-1">Strok Sayısı</th>
+                  <th class="py-1 text-right">Konsantrasyon (mg/m³)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr><td class="py-1">10:00 - 11:00</td><td>9.820</td><td>0.117</td><td>7</td><td class="text-right">12.0</td></tr>
+                <tr><td class="py-1">11:00 - 12:00</td><td>9.910</td><td>0.119</td><td>7</td><td class="text-right">12.1</td></tr>
+                <tr><td class="py-1">12:00 - 13:00</td><td>10.050</td><td>0.121</td><td>8</td><td class="text-right">12.0</td></tr>
+                <tr><td class="py-1 font-bold text-slate-900">13:00 - 14:00</td><td>9.850</td><td>0.118</td><td>7</td><td class="text-right font-bold">12.0</td></tr>
+                <tr><td class="py-1">14:00 - 15:00</td><td>9.780</td><td>0.116</td><td>7</td><td class="text-right">11.9</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-white border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="window.print()" class="px-4 py-1.5 bg-sky-700 text-white rounded-xl text-xs font-bold hover:bg-sky-800 transition">
+          🖨️ Yazdır / PDF Olarak Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- TOAST NOTIFICATION -->
+  <!-- ============================================== -->
+  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/95 border border-brand-border text-white text-xs px-4 py-2 rounded-xl shadow-2xl z-50 flex items-center gap-2 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300">
+    <span id="toastIcon">ℹ️</span>
+    <span id="toastMsg">İşlem başarılı</span>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- APPLICATION SCRIPT & COMPLETE SIMULATION LOGIC -->
+  <!-- ============================================== -->
+  <script>
+    // State matching screenshots and revised document
+    const state = {
+      isMasterUnlocked: false,
+      flowRate: 9850, // m3/h
+      concentration: 12.0, // mg/m3
+      lastStrokeWeight: 18.76, // gr/strk
+      totalInjectedKg: 19.085, // kg
+      tankLevelLiters: 1979.422, // Liters (max 2500)
+      activeAlarmsCount: 2,
+      activePump: 1, // 1: Pompa 1, 2: Pompa 2
+      pump1Status: 'AKTİF',
+      pump2Status: 'BEKLEMEDE',
+      dosagePeriodSec: 562,
+      nextStrokeTimer: 342,
+      lastUpdateSecondsAgo: 3,
+      currentStation: 'İZMİRGAZ SAHA 01 - Bornova',
+      activeTab: 'dashboard',
+      simSpeed: 1, // 1x or 10x
+      soundEnabled: true,
+      activeGraphCategory: 'enjeksiyon',
+      chartRange: '24h',
+      flowMode: 'Tahmini', // 'Tahmini' or 'Gercek'
+      operationMode: 'Otomatik', // 'Otomatik' or 'Manuel'
+      
+      consumption: {
+        bugun: 0.9305,
+        oncekiGun: 2.8684,
+        buHafta: 15.5670,
+        buAy: 18.4461,
+        statAnlik: 0.9305,
+        statMin: 0.7420,
+        statMax: 1.1020,
+        statOrt: 0.8847
+      },
+
+      reports: {
+        currentFilter: '7gun',
+        range: '01.09.2026 00:00 - 08.09.2026 23:59',
+        totalGas: 68520,
+        totalConsumption: 15.567,
+        avgInj: 18.68,
+        totalAlarm: 7,
+        p1Hours: 109.2,
+        p2Hours: 54.6,
+        p1Strokes: 1842190,
+        p2Strokes: 920450,
+        pumpSwitchCount: 4,
+        criticalAlarms: 2,
+        warningAlarms: 4,
+        totalAlarmDuration: 154,
+        tankStart: 1982.3,
+        tankEnd: 1968.4,
+        minInj: 17.82,
+        maxInj: 19.22
+      }
+    };
+
+    let charts = {};
+    let audioCtx = null;
+
+    // Master Gatekeeper Password Logic
+    function verifyMasterGate() {
+      const input = document.getElementById('masterGatePassword');
+      const pass = input.value.trim();
+      const err = document.getElementById('masterGateError');
+      
+      // Accepts master demo password 'machsoft2026' or configured pass
+      if (pass === 'machsoft2026' || pass === 'admin' || pass === 'machsoft') {
+        state.isMasterUnlocked = true;
+        err.classList.add('hidden');
+        document.getElementById('screenMasterGate').classList.add('hidden');
+        document.getElementById('screenLogin').classList.remove('hidden');
+        playBeep(580, 'sine', 0.12);
+        showToast('Yetkili girişi başarılı. Hoş geldiniz.', '🟢');
+      } else {
+        err.classList.remove('hidden');
+        playBeep(240, 'sawtooth', 0.2);
+      }
+    }
+
+    function lockToMasterGate() {
+      state.isMasterUnlocked = false;
+      document.getElementById('screenLoggedIn').classList.add('hidden');
+      document.getElementById('screenLogin').classList.add('hidden');
+      document.getElementById('screenMasterGate').classList.remove('hidden');
+      playBeep(320, 'triangle', 0.1);
+      showToast('Sistem kilitlendi. Güvenlik ekranına dönüldü.', '🔒');
+    }
+
+    // Audio sound generator
+    function playBeep(freq = 440, type = 'sine', duration = 0.08) {
+      if (!state.soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function toggleAudio() {
+      state.soundEnabled = !state.soundEnabled;
+      const btn = document.getElementById('btnAudioToggle');
+      if (state.soundEnabled) {
+        btn.innerText = 'Açık 🔊';
+        btn.className = 'px-2.5 py-1 rounded bg-brand-amber text-slate-950 text-[10px] font-bold';
+        playBeep(600, 'sine', 0.1);
+      } else {
+        btn.innerText = 'Kapalı 🔇';
+        btn.className = 'px-2.5 py-1 rounded bg-brand-bg text-brand-textMuted border border-brand-border text-[10px] font-medium';
+      }
+    }
+
+    function toggleFastSpeed() {
+      if (state.simSpeed === 1) {
+        state.simSpeed = 10;
+        document.getElementById('btnFastSpeed').className = 'bg-brand-amber text-slate-950 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow';
+        document.getElementById('fastSpeedText').innerText = '10x';
+        showToast('Simülasyon hızı 10x yapıldı!', '⏩');
+      } else {
+        state.simSpeed = 1;
+        document.getElementById('btnFastSpeed').className = 'bg-brand-surface hover:bg-brand-card border border-brand-border text-slate-300 px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 shadow';
+        document.getElementById('fastSpeedText').innerText = '1x';
+        showToast('Normal 1x hızına dönüldü.', '⏱️');
+      }
+    }
+
+    // DOM Ready
+    window.addEventListener('DOMContentLoaded', () => {
+      initCharts();
+      startRealtimeTick();
+      updateUI();
+    });
+
+    function showToast(msg, icon = 'ℹ️') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      document.getElementById('toastIcon').innerText = icon;
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 3000);
+    }
+
+    function toggleSimulator() {
+      const drawer = document.getElementById('simulatorDrawer');
+      drawer.classList.toggle('translate-x-full');
+    }
+
+    function openModal(modalId) {
+      const m = document.getElementById(modalId);
+      if (m) {
+        m.classList.remove('hidden');
+        playBeep(520, 'sine', 0.08);
+      }
+    }
+
+    function closeModal(modalId) {
+      const m = document.getElementById(modalId);
+      if (m) {
+        m.classList.add('hidden');
+        playBeep(420, 'sine', 0.06);
+      }
+    }
+
+    function triggerWaNotification(station, msg) {
+      const wa = document.getElementById('waPopup');
+      document.getElementById('waStationTitle').innerText = station;
+      document.getElementById('waMsgText').innerText = msg;
+      wa.classList.remove('-translate-y-40', 'opacity-0', 'pointer-events-none');
+      playBeep(880, 'sine', 0.15);
+      setTimeout(() => playBeep(1200, 'sine', 0.2), 150);
+    }
+
+    function dismissWaNotification(ack = false) {
+      const wa = document.getElementById('waPopup');
+      wa.classList.add('-translate-y-40', 'opacity-0', 'pointer-events-none');
+      if (ack) {
+        showToast('WhatsApp alarmı onaylandı.', '✓');
+      }
+    }
+
+    function selectStationFromGIS(stationName) {
+      closeModal('modalGIS');
+      onStationChange(stationName);
+      document.getElementById('stationSelect').value = stationName;
+      showToast(`${stationName} istasyonuna bağlanıldı.`, '📍');
+    }
+
+    function showSkidInfo(part) {
+      const t = document.getElementById('skidInfoTitle');
+      const d = document.getElementById('skidInfoDesc');
+      const b = document.getElementById('skidInfoBadge');
+
+      if (part === 'tank') {
+        t.innerText = 'Yatay THT Ana Depolama Tankı';
+        d.innerText = '2500 L kapasiteli, 316L paslanmaz çelik, 4.0 bar Azot (N₂) basınç battaniyeli yatay silindirik tank.';
+        b.innerText = '4.0 bar | 1979 L | 18.5 °C';
+      } else if (part === 'pump1') {
+        t.innerText = 'Pozitif Deplasmanlı Dozaj Pompası 1';
+        d.innerText = 'Körük mekanizmalı, sağa yönlü akış basan Ex-proof elektrik motorlu ana pompa.';
+        b.innerText = 'AKTİF | 18.76 gr/strk';
+      } else if (part === 'pump2') {
+        t.innerText = 'Dozaj Pompası 2 (Yedek Pompa)';
+        d.innerText = 'Pompaların çalışma düzeni sahaya göre belirlenir. Otomatik veya manuel devreye alınabilir.';
+        b.innerText = 'BEKLEMEDE';
+      } else if (part === 'fm') {
+        t.innerText = 'FM (Flowmetre) Ölçüm Cihazı';
+        d.innerText = '2 pompanın hemen sağında yer alan, hatta enjekte edilen koku kimyasalını yüksek hassasiyetle ölçen debi sayacı.';
+        b.innerText = 'FM: 18.76 gr/strk';
+      } else if (part === 'gasline') {
+        t.innerText = 'Ana Doğalgaz Boru Hattı & Enjeksiyon Lansı';
+        d.innerText = 'FM ölçümünden sonra kabinden çıkan boruyla ana doğalgaz boru hattına püskürtme yapılır.';
+        b.innerText = '12.0 mg/m³ | 9850 m³/h';
+      }
+      playBeep(600, 'sine', 0.05);
+    }
+
+    function submitSniffRecord() {
+      const loc = document.getElementById('sniffLocation').value;
+      const dev = document.getElementById('sniffDeviceModel').value;
+      const cal = document.getElementById('sniffCalibDate').value;
+      const val = document.getElementById('sniffValue').value;
+
+      const tbody = document.getElementById('sniffLogTbody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="py-1.5 text-white">${loc}</td>
+        <td class="py-1.5 text-slate-300">${dev}</td>
+        <td class="py-1.5 text-brand-textMuted">${cal}</td>
+        <td class="py-1.5 text-right text-emerald-400 font-bold">${val} mg/m³</td>
+      `;
+      tbody.prepend(tr);
+
+      closeModal('modalSniff');
+      showToast(`Koku Ölçümü Kaydedildi: ${loc} (${val} mg/m³)`, '👃');
+    }
+
+    function triggerWeatherSurge() {
+      toggleSimulator();
+      // Surge flow to 18500 m3/h
+      document.getElementById('simFlowSlider').value = 18500;
+      onSimFlowChange(18500);
+      showToast('Soğuk hava dalgası öngörüsü: Gaz çekişi 18.500 m³/h öngörüldü!', '❄️');
+      playBeep(350, 'sawtooth', 0.2);
+    }
+
+    function setViewMode(mode) {
+      const container = document.getElementById('appContainer');
+      const btnMobile = document.getElementById('btnViewMobile');
+      const btnDesktop = document.getElementById('btnViewDesktop');
+      const statusBar = document.getElementById('simulatedStatusBar');
+
+      if (mode === 'desktop') {
+        container.classList.remove('phone-mockup');
+        container.classList.add('w-full', 'max-w-6xl', 'h-[890px]', 'rounded-2xl', 'border', 'border-brand-border', 'shadow-2xl');
+        statusBar.classList.add('hidden');
+        btnDesktop.classList.add('bg-brand-amber', 'text-slate-950', 'shadow');
+        btnDesktop.classList.remove('text-brand-textMuted');
+        btnMobile.classList.remove('bg-brand-amber', 'text-slate-950', 'shadow');
+        btnMobile.classList.add('text-brand-textMuted');
+      } else {
+        container.classList.add('phone-mockup');
+        container.classList.remove('w-full', 'max-w-6xl', 'h-[890px]', 'rounded-2xl', 'border', 'border-brand-border', 'shadow-2xl');
+        statusBar.classList.remove('hidden');
+        btnMobile.classList.add('bg-brand-amber', 'text-slate-950', 'shadow');
+        btnMobile.classList.remove('text-brand-textMuted');
+        btnDesktop.classList.remove('bg-brand-amber', 'text-slate-950', 'shadow');
+        btnDesktop.classList.add('text-brand-textMuted');
+      }
+    }
+
+    function loginAndGoTo(tabName) {
+      document.getElementById('screenLogin').classList.add('hidden');
+      document.getElementById('screenLoggedIn').classList.remove('hidden');
+      switchTab(tabName);
+      playBeep(520, 'sine', 0.12);
+      showToast(`Oturum açıldı: ${state.currentStation}`, '🟢');
+    }
+
+    function goToLogin() {
+      document.getElementById('screenLoggedIn').classList.add('hidden');
+      document.getElementById('screenLogin').classList.remove('hidden');
+      playBeep(350, 'triangle', 0.1);
+      showToast('Oturum kapatıldı.', '🔒');
+    }
+
+    function onStationChange(val) {
+      state.currentStation = val;
+      document.getElementById('activeStationTitle').innerText = val;
+      document.getElementById('cardStationName').innerText = val;
+      playBeep(620, 'sine', 0.08);
+      showToast(`Seçili istasyon: ${val}`, '🏢');
+    }
+
+    function switchTab(tabKey) {
+      state.activeTab = tabKey;
+      const tabs = ['dashboard', 'canli', 'alarmlar', 'tuketim', 'grafikler', 'raporlar'];
+      
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab${capitalize(t)}`);
+        const pill = document.getElementById(`navPill${capitalize(t)}`);
+        const btn = document.getElementById(`navBtn${capitalize(t)}`);
+        
+        if (t === tabKey) {
+          el.classList.remove('hidden');
+          pill.className = 'px-4 py-1 rounded-full bg-emerald-400 text-slate-950 font-bold shadow transition-all';
+          btn.querySelector('span').className = 'text-[10px] text-white font-bold mt-0.5';
+        } else {
+          el.classList.add('hidden');
+          pill.className = 'px-4 py-1 rounded-full text-brand-textMuted hover:text-white transition-all';
+          btn.querySelector('span').className = 'text-[10px] text-brand-textMuted font-medium mt-0.5';
+        }
+      });
+
+      document.getElementById('appViewport').scrollTop = 0;
+      playBeep(700, 'sine', 0.04);
+      if (tabKey === 'grafikler') {
+        renderCategoryChart();
+      }
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Proportional Dosage & Flow Handling
+    function onSimFlowChange(val) {
+      state.flowRate = parseInt(val);
+      document.getElementById('simFlowDisplay').innerText = `${state.flowRate} m³/h`;
+
+      // Dosage Period Equation:
+      const calculatedPeriod = Math.round((state.lastStrokeWeight * 1000 * 3600) / (state.flowRate * state.concentration));
+      state.dosagePeriodSec = Math.max(30, Math.min(1800, calculatedPeriod));
+
+      if (state.nextStrokeTimer > state.dosagePeriodSec) {
+        state.nextStrokeTimer = state.dosagePeriodSec;
+      }
+      updateUI();
+    }
+
+    function triggerManualStroke() {
+      const strokeKg = state.lastStrokeWeight / 1000;
+      state.totalInjectedKg = parseFloat((state.totalInjectedKg + strokeKg).toFixed(3));
+      state.tankLevelLiters = parseFloat((state.tankLevelLiters - (strokeKg / 1.0)).toFixed(3));
+      
+      state.consumption.bugun = parseFloat((state.consumption.bugun + strokeKg).toFixed(4));
+      state.consumption.buHafta = parseFloat((state.consumption.buHafta + strokeKg).toFixed(4));
+      state.consumption.buAy = parseFloat((state.consumption.buAy + strokeKg).toFixed(4));
+      state.consumption.statAnlik = state.consumption.bugun;
+
+      state.nextStrokeTimer = state.dosagePeriodSec;
+      state.reports.p1Strokes++;
+
+      playBeep(220, 'square', 0.08);
+
+      const badge = document.getElementById('strokePulseBadge');
+      if (badge) {
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span><span class="text-emerald-300 font-bold">STROKE OK</span>';
+        setTimeout(() => {
+          badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span><span>STROKE</span>';
+        }, 1200);
+      }
+
+      const spray = document.getElementById('sprayDot');
+      if (spray) {
+        spray.classList.remove('animate-ping');
+        void spray.offsetWidth;
+        spray.classList.add('animate-ping');
+      }
+
+      updateUI();
+      showToast(`Enjeksiyon vuruşu gerçekleşti (+${state.lastStrokeWeight} gr)`, '⚡');
+    }
+
+    function resetTotalCounter() {
+      state.totalInjectedKg = 0.000;
+      updateUI();
+      showToast('Toplam enjeksiyon sayacı sıfırlandı.', '🔄');
+    }
+
+    function togglePumpSwitch() {
+      state.reports.pumpSwitchCount++;
+      if (state.activePump === 1) {
+        state.activePump = 2;
+        state.pump1Status = 'BEKLEMEDE';
+        state.pump2Status = 'AKTİF';
+        document.getElementById('lblHmiPumpSelect').innerText = 'Pompa 2';
+        showToast('Pompa 2 devreye alındı. Pompa 1 beklemede.', '🔄');
+      } else {
+        state.activePump = 1;
+        state.pump1Status = 'AKTİF';
+        state.pump2Status = 'BEKLEMEDE';
+        document.getElementById('lblHmiPumpSelect').innerText = 'Pompa 1 (Yazlık)';
+        showToast('Pompa 1 devreye alındı. Pompa 2 beklemede.', '🔄');
+      }
+      playBeep(480, 'triangle', 0.15);
+      updateUI();
+    }
+
+    function toggleFlowMode() {
+      state.flowMode = state.flowMode === 'Tahmini' ? 'Gerçek' : 'Tahmini';
+      document.getElementById('lblHmiFlowMode').innerText = state.flowMode;
+      showToast(`Debi seçimi değiştirildi: ${state.flowMode}`, 'ℹ️');
+    }
+
+    function toggleOperationMode() {
+      state.operationMode = state.operationMode === 'Otomatik' ? 'Manuel' : 'Otomatik';
+      document.getElementById('lblHmiOpMode').innerText = state.operationMode;
+      showToast(`Mod seçimi değiştirildi: ${state.operationMode}`, '⚙️');
+    }
+
+    function simulatePumpFailure() {
+      state.activePump = 2;
+      state.pump1Status = 'ARIZALI (KÖRÜK)';
+      state.pump2Status = 'AKTİF (OTO DEVREDE)';
+      state.activeAlarmsCount = 3;
+      state.reports.pumpSwitchCount++;
+      state.reports.criticalAlarms++;
+
+      const item1 = document.getElementById('alarmItem1');
+      if (item1) {
+        document.getElementById('alarm1StatusBadge').innerHTML = '<span class="text-rose-400 font-bold animate-pulse">Aktif • Şimdi</span>';
+      }
+
+      document.getElementById('systemStatusText').innerText = 'SİSTEM ALARMI (P1 HATA)';
+      document.getElementById('systemStatusDot').className = 'w-2.5 h-2.5 rounded-full bg-brand-danger animate-ping';
+      document.getElementById('canliStatusText').innerText = 'SİSTEM ALARMI (P1 HATA)';
+      document.getElementById('canliStatusDot').className = 'w-2.5 h-2.5 rounded-full bg-brand-danger animate-ping';
+      
+      document.getElementById('navAlarmBadge').innerText = '3';
+      document.getElementById('loginAlarmBadge').innerText = '3';
+
+      playBeep(880, 'sawtooth', 0.25);
+      setTimeout(() => playBeep(880, 'sawtooth', 0.25), 300);
+
+      triggerWaNotification(state.currentStation, 'Pompa 1 Düşük Akış / Körük Hasarı algılandı! Pompa 2 otomatik devreye alındı.');
+
+      updateUI();
+      showToast('KRİTİK UYARI: Pompa 1 Düşük Akış! Pompa 2 otomatik devreye girdi.', '🚨');
+    }
+
+    function restoreNormalSystem() {
+      state.activePump = 1;
+      state.pump1Status = 'AKTİF';
+      state.pump2Status = 'BEKLEMEDE';
+      state.activeAlarmsCount = 2;
+
+      document.getElementById('systemStatusText').innerText = 'Sistem NORMAL';
+      document.getElementById('systemStatusDot').className = 'w-2.5 h-2.5 rounded-full bg-brand-green animate-pulse';
+      document.getElementById('canliStatusText').innerText = 'Sistem NORMAL';
+      document.getElementById('canliStatusDot').className = 'w-2.5 h-2.5 rounded-full bg-brand-green animate-pulse';
+
+      document.getElementById('navAlarmBadge').innerText = '2';
+      document.getElementById('loginAlarmBadge').innerText = '2';
+
+      playBeep(520, 'sine', 0.1);
+      updateUI();
+      showToast('Sistem normal çalışma durumuna getirildi.', '✅');
+    }
+
+    function simulateLowTank() {
+      state.tankLevelLiters = 412.5; // ~%16 (L/LL range)
+      state.activeAlarmsCount = Math.max(state.activeAlarmsCount, 2);
+      document.getElementById('alarm2StatusBadge').innerHTML = '<span class="text-amber-400 font-bold animate-pulse">Aktif • Şimdi</span>';
+      playBeep(650, 'sawtooth', 0.2);
+      triggerWaNotification(state.currentStation, 'THT Tankı Seviyesi %16.5 seviyesine indi (L/LL uyarısı). Kimyasal lojistiği ikmali yönlendiriniz.');
+      updateUI();
+      showToast('Tank seviyesi kritik eşik (%20) altına indi uyarısı verildi!', '⚠️');
+    }
+
+    function refillTank() {
+      state.tankLevelLiters = Math.min(2500, state.tankLevelLiters + 500);
+      playBeep(580, 'sine', 0.15);
+      updateUI();
+      showToast('Tanka 500 Litre THT ikmali gerçekleşti.', '⛽');
+    }
+
+    function resolveAlarm(alarmId) {
+      if (alarmId === 1) {
+        document.getElementById('alarm1StatusBadge').innerText = 'Çözüldü • Az önce';
+        document.getElementById('alarm1StatusBadge').className = 'text-[10px] text-brand-textMuted';
+        showToast('Pompa 1 alarmı onaylandı.', '✓');
+      } else if (alarmId === 2) {
+        document.getElementById('alarm2StatusBadge').innerText = 'Çözüldü • Az önce';
+        document.getElementById('alarm2StatusBadge').className = 'text-[10px] text-brand-textMuted';
+        showToast('Tank Seviye Uyarısı onaylandı.', '✓');
+      }
+      playBeep(600, 'sine', 0.08);
+    }
+
+    // Hourly Slot Selection (Sayfa 3)
+    function selectHourSlot(slotText) {
+      document.querySelectorAll('.hour-slot-btn').forEach(btn => {
+        btn.className = 'hour-slot-btn px-2 py-1 rounded bg-brand-card hover:bg-brand-cardHover text-[10px] text-slate-300 font-mono';
+      });
+      event.target.className = 'hour-slot-btn px-2 py-1 rounded bg-brand-amber text-slate-950 font-bold text-[10px] font-mono shadow';
+      
+      document.getElementById('selectedHourLabel').innerText = slotText;
+      // Mock metrics for that slot
+      if (slotText === '13:00 - 14:00') {
+        document.getElementById('selectedHourKg').innerText = '0.118 kg';
+        document.getElementById('selectedHourStrokes').innerText = '7 Vuruş';
+        document.getElementById('selectedHourFlow').innerText = '9.850 m³/h';
+      } else if (slotText.includes('08:00') || slotText.includes('10:00')) {
+        document.getElementById('selectedHourKg').innerText = '0.145 kg';
+        document.getElementById('selectedHourStrokes').innerText = '9 Vuruş';
+        document.getElementById('selectedHourFlow').innerText = '12.400 m³/h';
+      } else {
+        document.getElementById('selectedHourKg').innerText = '0.075 kg';
+        document.getElementById('selectedHourStrokes').innerText = '4 Vuruş';
+        document.getElementById('selectedHourFlow').innerText = '6.200 m³/h';
+      }
+      showToast(`Saat dilimi seçildi: ${slotText}`, '🕒');
+    }
+
+    // Graph Category Switcher (Sayfa 2: Enjeksiyon, Tüketim, Debi, Tank)
+    function showGraphCategory(catKey) {
+      state.activeGraphCategory = catKey;
+      
+      // Update buttons
+      const buttons = ['enjeksiyon', 'tuketim', 'debi', 'tank'];
+      buttons.forEach(k => {
+        const btn = document.getElementById(`btnCat${capitalize(k)}`);
+        if (k === catKey) {
+          btn.className = 'graph-cat-btn p-2.5 rounded-xl border bg-brand-amber text-slate-950 font-bold border-brand-amber shadow text-left transition flex items-center gap-2';
+        } else {
+          btn.className = 'graph-cat-btn p-2.5 rounded-xl border bg-brand-bg border-brand-border text-slate-300 font-semibold hover:border-brand-amber text-left transition flex items-center gap-2';
+        }
+      });
+
+      renderCategoryChart();
+      playBeep(640, 'sine', 0.05);
+    }
+
+    function setChartRange(range) {
+      state.chartRange = range;
+      ['24h', '7d', '30d'].forEach(r => {
+        const btn = document.getElementById(`btnRange${r}`);
+        if (r === range) {
+          btn.className = 'px-2 py-0.5 bg-brand-amber text-slate-950 font-bold rounded';
+        } else {
+          btn.className = 'px-2 py-0.5 text-brand-textMuted rounded';
+        }
+      });
+      renderCategoryChart();
+    }
+
+    function renderCategoryChart() {
+      const ctx = document.getElementById('categoryChartCanvas');
+      if (!ctx) return;
+
+      const titleEl = document.getElementById('catChartTitle');
+      const subEl = document.getElementById('catChartSubtitle');
+      const statEl = document.getElementById('catChartStats');
+
+      if (charts.category) {
+        charts.category.destroy();
+      }
+
+      let chartData = {};
+      let chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8da2ac', font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8da2ac', font: { size: 10 } } }
+        }
+      };
+
+      if (state.activeGraphCategory === 'enjeksiyon') {
+        titleEl.innerText = 'Enjeksiyon Grafikleri: Son & Toplam';
+        subEl.innerText = 'Birim: gram (gr)';
+        statEl.innerHTML = `<span>Son Enjeksiyon: <strong class="text-white">18.76 gr</strong></span> <span>Toplam: <strong class="text-emerald-400">${state.totalInjectedKg} kg</strong></span>`;
+
+        chartData = {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+          datasets: [
+            {
+              label: 'Son Enjeksiyon (gr/strk)',
+              data: [18.75, 18.78, 18.76, 18.74, 18.76, 18.77, 18.76],
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.15)',
+              borderWidth: 2,
+              tension: 0.2
+            },
+            {
+              label: 'Toplam Enjeksiyon (kg)',
+              data: [18.2, 18.4, 18.6, 18.8, 19.0, 19.05, 19.085],
+              borderColor: '#22c55e',
+              borderWidth: 2,
+              tension: 0.2
+            }
+          ]
+        };
+      } else if (state.activeGraphCategory === 'tuketim') {
+        titleEl.innerText = 'Tüketim Grafikleri: Günlük, Haftalık, Aylık';
+        subEl.innerText = 'Birim: kilogram (kg)';
+        statEl.innerHTML = `<span>Günlük: <strong class="text-white">${state.consumption.bugun} kg</strong></span> <span>Aylık: <strong class="text-brand-amber">${state.consumption.buAy} kg</strong></span>`;
+
+        chartData = {
+          labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Günlük Tüketim (kg)',
+              data: [2.1, 2.4, 1.9, 2.8, 2.3, 1.8, 0.93],
+              backgroundColor: '#f5a623',
+              borderRadius: 6
+            }
+          ]
+        };
+      } else if (state.activeGraphCategory === 'debi') {
+        titleEl.innerText = 'Debi Grafiği: Gerçek Akış & Tahmini Akış';
+        subEl.innerText = 'Birim: m³/h & mg/m³';
+        statEl.innerHTML = `<span>Gerçek Debi: <strong class="text-white">${state.flowRate} m³/h</strong></span> <span>Hedef Koku: <strong class="text-emerald-400">12.0 mg/m³</strong></span>`;
+
+        chartData = {
+          labels: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
+          datasets: [
+            {
+              label: 'Gerçek Akış (m³/h)',
+              data: [4500, 4200, 7100, 11400, 10200, 9850, 12800, 8900],
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Tahmini Akış (m³/h)',
+              data: [4700, 4100, 7500, 11000, 10000, 10000, 12500, 9200],
+              borderColor: '#f5a623',
+              borderDash: [5, 5],
+              tension: 0.3
+            }
+          ]
+        };
+      } else if (state.activeGraphCategory === 'tank') {
+        titleEl.innerText = 'Tank Seviye Grafiği: Kalan Seviye';
+        subEl.innerText = 'Birim: Litre (Lt)';
+        statEl.innerHTML = `<span>Kalan: <strong class="text-white">${state.tankLevelLiters} L</strong></span> <span>Basınç: <strong class="text-amber-400">4.0 bar</strong></span>`;
+
+        chartData = {
+          labels: ['1 Eyl', '2 Eyl', '3 Eyl', '4 Eyl', '5 Eyl', '6 Eyl', '7 Eyl', '8 Eyl'],
+          datasets: [
+            {
+              label: 'Tank Kalan Seviye (Litre)',
+              data: [1982.3, 1980.2, 1978.1, 1975.0, 1972.8, 1970.5, 1968.4, 1979.4],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              fill: true,
+              tension: 0.2
+            }
+          ]
+        };
+      }
+
+      charts.category = new Chart(ctx, {
+        type: chartData.datasets[0].type || 'line',
+        data: chartData,
+        options: chartOptions
+      });
+    }
+
+    // Reports Preset
+    function setReportFilterPreset(preset) {
+      state.reports.currentFilter = preset;
+      if (preset === 'bugun') {
+        document.getElementById('repStartDate').value = '2026-09-08T00:00';
+        document.getElementById('repEndDate').value = '2026-09-08T23:59';
+      } else if (preset === '7gun') {
+        document.getElementById('repStartDate').value = '2026-09-01T00:00';
+        document.getElementById('repEndDate').value = '2026-09-08T23:59';
+      } else if (preset === '30gun') {
+        document.getElementById('repStartDate').value = '2026-08-09T00:00';
+        document.getElementById('repEndDate').value = '2026-09-08T23:59';
+      }
+      calculateCustomReport();
+    }
+
+    function calculateCustomReport() {
+      const start = document.getElementById('repStartDate').value.replace('T', ' ');
+      const end = document.getElementById('repEndDate').value.replace('T', ' ');
+      state.reports.range = `${start} - ${end}`;
+      document.getElementById('reportRangeLabel').innerText = state.reports.range;
+      showToast('Rapor seçili tarih ve saat aralığına göre güncellendi.', '📊');
+    }
+
+    function openNewMaintenanceModal() {
+      const act = prompt('Yapılan İşlem / Değişen Parça:', 'Pompa 2 Conta ve Körük İncelemesi');
+      if (act) {
+        const tbody = document.getElementById('maintenanceLogTbody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-1.5 text-slate-300">08.09.2026</td>
+          <td class="py-1.5 text-white">${act}</td>
+          <td class="py-1.5 text-brand-textMuted">Nöbetçi Müh.</td>
+          <td class="py-1.5 text-right text-emerald-400">Kaydedildi</td>
+        `;
+        tbody.prepend(tr);
+        showToast('Bakım kaydı başarıyla eklendi.', '📝');
+      }
+    }
+
+    // Realtime Tick Engine
+    function startRealtimeTick() {
+      setInterval(() => {
+        state.lastUpdateSecondsAgo += state.simSpeed;
+        if (state.lastUpdateSecondsAgo > 5) {
+          state.lastUpdateSecondsAgo = 1;
+          const jitter = (Math.random() - 0.5) * 6;
+          state.flowRate = Math.round(state.flowRate + jitter);
+        }
+        document.getElementById('secAgo').innerText = state.lastUpdateSecondsAgo;
+
+        if (state.nextStrokeTimer > state.simSpeed) {
+          state.nextStrokeTimer -= state.simSpeed;
+        } else {
+          triggerManualStroke();
+        }
+
+        const now = new Date();
+        const hrs = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('statusBarClock').innerText = `${hrs}:${mins}`;
+
+        updateUI();
+      }, 1000);
+    }
+
+    function updateUI() {
+      // Dashboard UI
+      document.getElementById('valFlow').innerText = state.flowRate;
+      document.getElementById('valConcentration').innerText = state.concentration.toFixed(1);
+      document.getElementById('valLastInj').innerText = state.lastStrokeWeight.toFixed(2);
+      document.getElementById('valTotalInj').innerText = state.totalInjectedKg.toFixed(3);
+      document.getElementById('valTankLevel').innerText = state.tankLevelLiters.toFixed(3);
+      document.getElementById('valActiveAlarm').innerText = state.activeAlarmsCount;
+
+      const tankPct = ((state.tankLevelLiters / 2500) * 100);
+      document.getElementById('valTankPercent').innerText = `%${tankPct.toFixed(1)}`;
+      document.getElementById('tankLevelBar').style.width = `${Math.min(100, Math.max(0, tankPct))}%`;
+
+      // 4-Point Level Signals (LL, L, H, HH)
+      const sigLL = document.getElementById('sigLL');
+      const sigL = document.getElementById('sigL');
+      const sigH = document.getElementById('sigH');
+      const sigHH = document.getElementById('sigHH');
+
+      const pidSigLL = document.getElementById('pidSigLL');
+      const pidSigL = document.getElementById('pidSigL');
+      const pidSigH = document.getElementById('pidSigH');
+      const pidSigHH = document.getElementById('pidSigHH');
+
+      // Reset badges
+      sigLL.className = 'p-1 rounded bg-brand-bg border border-brand-border text-brand-textDim';
+      sigL.className = 'p-1 rounded bg-brand-bg border border-brand-border text-brand-textDim';
+      sigH.className = 'p-1 rounded bg-brand-bg border border-brand-border text-brand-textDim';
+      sigHH.className = 'p-1 rounded bg-brand-bg border border-brand-border text-brand-textDim';
+
+      if (pidSigLL) pidSigLL.setAttribute('fill', '#64748b');
+      if (pidSigL) pidSigL.setAttribute('fill', '#64748b');
+      if (pidSigH) pidSigH.setAttribute('fill', '#64748b');
+      if (pidSigHH) pidSigHH.setAttribute('fill', '#64748b');
+
+      if (tankPct >= 90) {
+        sigHH.className = 'p-1 rounded bg-rose-950/80 border border-rose-600 text-rose-300 font-bold';
+        sigHH.querySelector('div').className = 'w-2 h-2 rounded-full bg-rose-500 mx-auto mb-0.5 animate-ping';
+        if (pidSigHH) pidSigHH.setAttribute('fill', '#ef4444');
+      } else if (tankPct >= 70) {
+        sigH.className = 'p-1 rounded bg-emerald-950/80 border border-emerald-600 text-emerald-400 font-bold';
+        sigH.querySelector('div').className = 'w-2 h-2 rounded-full bg-emerald-400 mx-auto mb-0.5 animate-pulse';
+        if (pidSigH) pidSigH.setAttribute('fill', '#22c55e');
+      } else if (tankPct > 10 && tankPct <= 25) {
+        sigL.className = 'p-1 rounded bg-amber-950/80 border border-amber-600 text-brand-amber font-bold';
+        sigL.querySelector('div').className = 'w-2 h-2 rounded-full bg-amber-500 mx-auto mb-0.5 animate-pulse';
+        if (pidSigL) pidSigL.setAttribute('fill', '#f59e0b');
+      } else if (tankPct <= 10) {
+        sigLL.className = 'p-1 rounded bg-rose-950/80 border border-rose-600 text-rose-400 font-bold';
+        sigLL.querySelector('div').className = 'w-2 h-2 rounded-full bg-rose-500 mx-auto mb-0.5 animate-ping';
+        if (pidSigLL) pidSigLL.setAttribute('fill', '#ef4444');
+      }
+
+      // HMI Panel in Canli tab
+      document.getElementById('hmiFlow').innerText = state.flowRate;
+      document.getElementById('hmiConc').innerText = state.concentration.toFixed(1);
+      document.getElementById('hmiTotalInj').innerText = state.totalInjectedKg.toFixed(3);
+      document.getElementById('hmiLastInj').innerText = state.lastStrokeWeight.toFixed(2);
+      document.getElementById('hmiPeriod').innerText = `${state.dosagePeriodSec} sn`;
+      document.getElementById('hmiNextStroke').innerText = `${state.nextStrokeTimer} sn`;
+
+      // P&ID dynamic labels
+      const pidTankText = document.getElementById('pidTankText');
+      if (pidTankText) pidTankText.textContent = `${Math.round(state.tankLevelLiters)} L`;
+      const pidConcText = document.getElementById('pidConcText');
+      if (pidConcText) pidConcText.textContent = `${state.concentration.toFixed(1)} mg/m³`;
+      const pidFlowText = document.getElementById('pidFlowText');
+      if (pidFlowText) pidFlowText.textContent = `${state.flowRate} m³/h`;
+      const pidFmValue = document.getElementById('pidFmValue');
+      if (pidFmValue) pidFmValue.textContent = state.lastStrokeWeight.toFixed(2);
+
+      // P&ID Pump colors and labels (Arrows pointing right '>')
+      const p1Circle = document.getElementById('pidPump1Circle');
+      const p1Tri = document.getElementById('pidPump1Tri');
+      const p1Label = document.getElementById('pidPump1Label');
+      const p2Circle = document.getElementById('pidPump2Circle');
+      const p2Tri = document.getElementById('pidPump2Tri');
+      const p2Label = document.getElementById('pidPump2Label');
+
+      if (state.activePump === 1 && state.pump1Status === 'AKTİF') {
+        p1Circle.setAttribute('stroke', '#22c55e');
+        p1Tri.setAttribute('fill', '#22c55e');
+        p1Label.setAttribute('fill', '#22c55e');
+        p1Label.textContent = 'P1 (Aktif >)';
+        p2Circle.setAttribute('stroke', '#64748b');
+        p2Tri.setAttribute('fill', '#64748b');
+        p2Label.setAttribute('fill', '#94a3b8');
+        p2Label.textContent = 'P2 (Yedek >)';
+      } else if (state.pump1Status.includes('ARIZA')) {
+        p1Circle.setAttribute('stroke', '#ef4444');
+        p1Tri.setAttribute('fill', '#ef4444');
+        p1Label.setAttribute('fill', '#ef4444');
+        p1Label.textContent = 'P1 (ARIZA >)';
+        p2Circle.setAttribute('stroke', '#22c55e');
+        p2Tri.setAttribute('fill', '#22c55e');
+        p2Label.setAttribute('fill', '#22c55e');
+        p2Label.textContent = 'P2 (Aktif >)';
+      } else {
+        p1Circle.setAttribute('stroke', '#64748b');
+        p1Tri.setAttribute('fill', '#64748b');
+        p1Label.textContent = 'P1 (Yedek >)';
+        p2Circle.setAttribute('stroke', '#22c55e');
+        p2Tri.setAttribute('fill', '#22c55e');
+        p2Label.textContent = 'P2 (Aktif >)';
+      }
+
+      // Pump indicators text & dots
+      const p1Dot = document.getElementById('pump1Dot');
+      const p2Dot = document.getElementById('pump2Dot');
+      const p1Text = document.getElementById('pump1StatusText');
+      const p2Text = document.getElementById('pump2StatusText');
+
+      if (state.pump1Status === 'AKTİF') {
+        p1Dot.className = 'w-3 h-3 rounded-full bg-emerald-400 animate-pulse';
+        p1Text.className = 'text-xs font-bold text-emerald-400 tracking-wider';
+        p1Text.innerText = 'AKTİF';
+      } else if (state.pump1Status.includes('ARIZA')) {
+        p1Dot.className = 'w-3 h-3 rounded-full bg-rose-500 animate-ping';
+        p1Text.className = 'text-xs font-bold text-rose-500 tracking-wider';
+        p1Text.innerText = 'KÖRÜK HASARI';
+      } else {
+        p1Dot.className = 'w-3 h-3 rounded-full bg-slate-500';
+        p1Text.className = 'text-xs font-bold text-slate-400 tracking-wider';
+        p1Text.innerText = 'BEKLEMEDE';
+      }
+
+      if (state.pump2Status.includes('AKT')) {
+        p2Dot.className = 'w-3 h-3 rounded-full bg-emerald-400 animate-pulse';
+        p2Text.className = 'text-xs font-bold text-emerald-400 tracking-wider';
+        p2Text.innerText = state.pump2Status;
+      } else {
+        p2Dot.className = 'w-3 h-3 rounded-full bg-slate-500';
+        p2Text.className = 'text-xs font-bold text-slate-400 tracking-wider';
+        p2Text.innerText = 'BEKLEMEDE';
+      }
+
+      // Tüketim Tab
+      document.getElementById('tuketimBugun').innerText = state.consumption.bugun.toFixed(4);
+      document.getElementById('tuketimOncekiGun').innerText = state.consumption.oncekiGun.toFixed(4);
+      document.getElementById('tuketimBuHafta').innerText = state.consumption.buHafta.toFixed(4);
+      document.getElementById('tuketimBuAy').innerText = state.consumption.buAy.toFixed(4);
+      document.getElementById('tuketimStatAnlik').innerText = `${state.consumption.bugun.toFixed(4)} kg`;
+
+      // Reports Tab
+      document.getElementById('repTotalStrokes').innerText = `${(state.reports.p1Strokes + state.reports.p2Strokes).toLocaleString()} Strok`;
+      document.getElementById('repP1Strokes').innerText = `${state.reports.p1Strokes.toLocaleString()} Strok (109.2 saat)`;
+      document.getElementById('repP2Strokes').innerText = `${state.reports.p2Strokes.toLocaleString()} Strok (54.6 saat)`;
+    }
+
+    // Chart initializations
+    function initCharts() {
+      // 1. Dashboard 24h Trend Chart
+      const ctxQuick = document.getElementById('quickTrendCanvas');
+      if (ctxQuick) {
+        charts.quick = new Chart(ctxQuick, {
+          type: 'line',
+          data: {
+            labels: ['0', '3', '6', '9', '12', '15', '18', '21', '24'],
+            datasets: [
+              {
+                label: 'Akış (m³/h)',
+                data: [10, 12, 35, 85, 45, 95, 30, 75, 15],
+                borderColor: '#22c55e',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.1
+              },
+              {
+                label: 'Dozaj (mg/m³)',
+                data: [95, 30, 40, 20, 80, 45, 90, 30, 50],
+                borderColor: '#f5a623',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8da2ac', font: { size: 10 } } },
+              y: { min: 0, max: 100, ticks: { stepSize: 25, color: '#8da2ac', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+          }
+        });
+      }
+
+      // 2. Hourly Consumption Chart
+      const ctxHourly = document.getElementById('hourlyConsumptionCanvas');
+      if (ctxHourly) {
+        charts.hourly = new Chart(ctxHourly, {
+          type: 'line',
+          data: {
+            labels: ['0', '4', '8', '12', '16', '20', '24'],
+            datasets: [
+              {
+                label: 'Akış',
+                data: [20, 75, 40, 95, 40, 70, 35],
+                borderColor: '#22c55e',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.1
+              },
+              {
+                label: 'Dozaj',
+                data: [25, 85, 35, 10, 35, 75, 10],
+                borderColor: '#f5a623',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8da2ac', font: { size: 10 } } },
+              y: { min: 0, max: 100, ticks: { stepSize: 25, color: '#8da2ac', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+          }
+        });
+      }
+
+      renderCategoryChart();
+    }
+  </script>
+</body>
+</html>
