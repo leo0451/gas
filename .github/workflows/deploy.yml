@@ -1,0 +1,47 @@
+name: Deploy to Oracle Cloud VM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  deploy:
+    name: Deploy to Oracle Cloud
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.ORACLE_PORT || '22' }} -H ${{ secrets.ORACLE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Ensure Target Directory Exists
+        run: |
+          ssh -p ${{ secrets.ORACLE_PORT || '22' }} ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} "sudo mkdir -p /var/www/gas && sudo chown -R ${{ secrets.ORACLE_USER }}:${{ secrets.ORACLE_USER }} /var/www/gas"
+
+      - name: Sync Files via rsync
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.ORACLE_PORT || '22' }}" \
+            --exclude '.git*' \
+            --exclude '*.bak' \
+            ./ ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }}:/var/www/gas/
+
+      - name: Set Permissions & Reload Web Server
+        run: |
+          ssh -p ${{ secrets.ORACLE_PORT || '22' }} ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} << 'EOF'
+            sudo chmod -R 755 /var/www/gas
+            if command -v nginx > /dev/null 2>&1 && systemctl is-active --quiet nginx; then
+              sudo systemctl reload nginx
+            elif command -v httpd > /dev/null 2>&1 && systemctl is-active --quiet httpd; then
+              sudo systemctl reload httpd
+            fi
+            echo "✅ Deploy successfully completed!"
+          EOF
