@@ -15,28 +15,60 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup SSH Connection
+      - name: Sanitize Connection Parameters
+        run: |
+          # 1. Clean Host (strip http://, https://, ports, slashes, spaces)
+          RAW_HOST="${{ secrets.ORACLE_HOST }}"
+          CLEAN_HOST=$(echo "$RAW_HOST" | sed -E -e 's|^https?://||' -e 's|:[0-9]+.*$||' -e 's|/.*$||' | tr -d '[:space:]')
+          if [ -z "$CLEAN_HOST" ]; then
+            CLEAN_HOST="84.13.83.163"
+          fi
+
+          # 2. Clean User (strip all spaces)
+          RAW_USER="${{ secrets.ORACLE_USER }}"
+          CLEAN_USER=$(echo "$RAW_USER" | tr -d '[:space:]')
+          if [ -z "$CLEAN_USER" ]; then
+            CLEAN_USER="ubuntu"
+          fi
+
+          # 3. Clean Port
+          RAW_PORT="${{ secrets.ORACLE_PORT }}"
+          CLEAN_PORT=$(echo "$RAW_PORT" | tr -d '[:space:]')
+          if [ -z "$CLEAN_PORT" ]; then
+            CLEAN_PORT="22"
+          fi
+
+          echo "TARGET_HOST=$CLEAN_HOST" >> $GITHUB_ENV
+          echo "TARGET_USER=$CLEAN_USER" >> $GITHUB_ENV
+          echo "TARGET_PORT=$CLEAN_PORT" >> $GITHUB_ENV
+
+          echo "Target Host: $CLEAN_HOST"
+          echo "Target User: $CLEAN_USER"
+          echo "Target Port: $CLEAN_PORT"
+
+      - name: Setup SSH Key & Known Hosts
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.ORACLE_PORT || '22' }} -H ${{ secrets.ORACLE_HOST || '84.13.83.163' }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p $TARGET_PORT -H $TARGET_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Ensure Target Directory Exists
+      - name: Prepare Remote Directory
         run: |
-          ssh -p ${{ secrets.ORACLE_PORT || '22' }} ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST || '84.13.83.163' }} "sudo mkdir -p /var/www/gas && sudo chown -R ${{ secrets.ORACLE_USER }}:${{ secrets.ORACLE_USER }} /var/www/gas"
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p $TARGET_PORT ${TARGET_USER}@${TARGET_HOST} \
+            "sudo mkdir -p /var/www/gas && sudo chown -R ${TARGET_USER}:${TARGET_USER} /var/www/gas"
 
-      - name: Sync Files via rsync
+      - name: Sync Code via rsync
         run: |
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.ORACLE_PORT || '22' }}" \
+            -e "ssh -o StrictHostKeyChecking=no -p $TARGET_PORT" \
             --exclude '.git*' \
             --exclude '*.bak' \
-            ./ ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST || '84.13.83.163' }}:/var/www/gas/
+            ./ ${TARGET_USER}@${TARGET_HOST}:/var/www/gas/
 
       - name: Configure Nginx Port 6060 & Firewall
         run: |
-          ssh -p ${{ secrets.ORACLE_PORT || '22' }} ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST || '84.13.83.163' }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -p $TARGET_PORT ${TARGET_USER}@${TARGET_HOST} << 'EOF'
             sudo chmod -R 755 /var/www/gas
 
             # Nginx Port 6060 Configuration
