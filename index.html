@@ -962,11 +962,11 @@
               <div class="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <label class="text-[10px] text-brand-textMuted block mb-1">Başlangıç Zamanı:</label>
-                  <input type="datetime-local" id="repStartDate" value="2026-09-01T00:00" class="w-full bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-[11px] font-mono">
+                  <input type="datetime-local" id="repStartDate" value="2026-09-01T00:00" onchange="onDateInputChange()" class="w-full bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-[11px] font-mono">
                 </div>
                 <div>
                   <label class="text-[10px] text-brand-textMuted block mb-1">Bitiş Zamanı:</label>
-                  <input type="datetime-local" id="repEndDate" value="2026-09-08T23:59" class="w-full bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-[11px] font-mono">
+                  <input type="datetime-local" id="repEndDate" value="2026-09-08T23:59" onchange="onDateInputChange()" class="w-full bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 text-white outline-none text-[11px] font-mono">
                 </div>
               </div>
 
@@ -1709,26 +1709,26 @@
           </div>
           <div class="text-right font-mono text-[9px] text-slate-500">
             <div>Belge No: EPDK-KK-2026/089</div>
-            <div>Tarih: 08.09.2026</div>
+            <div>Rapor Tarihi: <span id="epdkDocDate">08.09.2026</span></div>
           </div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm text-center">
           <div>
             <span class="text-slate-500 text-[9px] block">İstasyon Adı</span>
-            <span class="font-bold text-slate-900 text-xs">İZMİRGAZ SAHA 01</span>
+            <span class="font-bold text-slate-900 text-xs truncate block" id="epdkStationName">İZMİRGAZ SAHA 01</span>
           </div>
           <div>
             <span class="text-slate-500 text-[9px] block">Toplam Dağıtılan Gaz</span>
-            <span class="font-bold text-slate-900 text-xs">68.520 m³</span>
+            <span class="font-bold text-slate-900 text-xs" id="epdkTotalGas">68.520 m³</span>
           </div>
           <div>
             <span class="text-slate-500 text-[9px] block">THT Sarfiyatı</span>
-            <span class="font-bold text-slate-900 text-xs">15.567 kg</span>
+            <span class="font-bold text-slate-900 text-xs" id="epdkTotalConsumption">15.567 kg</span>
           </div>
           <div>
             <span class="text-slate-500 text-[9px] block">Ort. Konsantrasyon</span>
-            <span class="font-bold text-emerald-600 text-xs">12.08 mg/m³</span>
+            <span class="font-bold text-emerald-600 text-xs" id="epdkAvgConc">12.08 mg/m³</span>
           </div>
         </div>
 
@@ -1737,7 +1737,7 @@
             <span>✓</span> <span>EPDK Mevzuatı Uygunluk Onayı</span>
           </div>
           <p class="text-emerald-700 text-[10px] leading-relaxed">
-            İncelenen dönem boyunca kokulandırma konsantrasyonu TS EN ISO 13734 ve EPDK sınırları (10 - 20 mg/Nm³) içerisinde %99.8 süreyle kalmış olup herhangi bir koku kesintisi yaşanmamıştır.
+            İncelenen dönem (<span id="epdkRangeSpan" class="font-semibold text-emerald-950">01.09.2026 - 08.09.2026</span>) boyunca kokulandırma konsantrasyonu TS EN ISO 13734 ve EPDK sınırları (10 - 20 mg/Nm³) içerisinde %99.8 süreyle kalmış olup herhangi bir koku kesintisi yaşanmamıştır.
           </p>
         </div>
 
@@ -1790,11 +1790,11 @@
               <span class="text-[10px] font-bold text-slate-700">MachSoft Mühendislik & Otomasyon</span>
             </div>
             <h1 class="text-sm font-black tracking-tight text-slate-900">SAHA PERİYODİK TÜKETİM & EKİPMAN ANALİZ RAPORU</h1>
-            <p class="text-[11px] text-slate-600 font-mono">Tesis: İZMİRGAZ SAHA 01 - Bornova | Dönem: 01.09.2026 - 08.09.2026</p>
+            <p class="text-[11px] text-slate-600 font-mono">Tesis: <span id="techRepStation">İZMİRGAZ SAHA 01 - Bornova</span> | Dönem: <span id="techRepRange">01.09.2026 - 08.09.2026</span></p>
           </div>
           <div class="text-right font-mono text-[9px] text-slate-500">
-            <div>Rapor No: MS-2026-0908</div>
-            <div>Tarih: 08.09.2026 21:00</div>
+            <div>Rapor No: <span id="techRepDocNo">MS-2026-0908</span></div>
+            <div>Tarih: <span id="techRepDate">08.09.2026 21:00</span></div>
           </div>
         </div>
 
@@ -1802,45 +1802,45 @@
         <div class="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-slate-200">
           <div>
             <span class="text-slate-500 text-[10px] block">Pompa 1 (P-101A) Strok</span>
-            <span class="font-bold text-slate-900 text-xs font-mono">1.842.190 Strok</span>
+            <span class="font-bold text-slate-900 text-xs font-mono" id="techRepP1Strokes">1.842.190 Strok</span>
           </div>
           <div>
             <span class="text-slate-500 text-[10px] block">Pompa 2 (P-101B) Strok</span>
-            <span class="font-bold text-slate-900 text-xs font-mono">920.450 Strok</span>
+            <span class="font-bold text-slate-900 text-xs font-mono" id="techRepP2Strokes">920.450 Strok</span>
           </div>
           <div>
-            <span class="text-slate-500 text-[10px] block">Kümülatif Pompa Vuruşu</span>
-            <span class="font-bold text-emerald-600 text-xs font-mono">2.762.640 Strok</span>
+            <span class="text-slate-500 text-[10px] block">Dönem Toplam Vuruş</span>
+            <span class="font-bold text-emerald-600 text-xs font-mono" id="techRepTotalStrokes">2.762.640 Strok</span>
           </div>
           <div class="pt-2 border-t border-slate-100">
             <span class="text-slate-500 text-[10px] block">Tank Başlangıç Seviyesi</span>
-            <span class="font-bold text-slate-900 text-xs font-mono">1982.3 L</span>
+            <span class="font-bold text-slate-900 text-xs font-mono" id="techRepTankStart">1982.3 L</span>
           </div>
           <div class="pt-2 border-t border-slate-100">
             <span class="text-slate-500 text-[10px] block">Tank Bitiş Seviyesi</span>
-            <span class="font-bold text-slate-900 text-xs font-mono">1968.4 L</span>
+            <span class="font-bold text-slate-900 text-xs font-mono" id="techRepTankEnd">1968.4 L</span>
           </div>
           <div class="pt-2 border-t border-slate-100">
             <span class="text-slate-500 text-[10px] block">Net Hacim Değişimi (ΔL)</span>
-            <span class="font-bold text-rose-600 text-xs font-mono">-13.9 L (Sarfiyat)</span>
+            <span class="font-bold text-rose-600 text-xs font-mono" id="techRepTankDelta">-13.9 L (Sarfiyat)</span>
           </div>
         </div>
 
         <!-- Saatlik Döküm Özet Tablosu -->
         <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
-          <span class="font-bold text-slate-900 text-xs block">Dönemsel Saatlik Sarfiyat Dağılımı</span>
+          <span class="font-bold text-slate-900 text-xs block" id="techRepTableTitle">Dönemsel Sarfiyat Dağılımı</span>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-[10px] font-mono">
               <thead class="border-b border-slate-200 text-slate-500">
                 <tr>
-                  <th class="py-1">Saat Dilimi</th>
+                  <th class="py-1">Zaman Dilimi</th>
                   <th class="py-1">Gaz Akışı (m³/h)</th>
                   <th class="py-1">Tüketim (kg)</th>
                   <th class="py-1">Strok Adedi</th>
                   <th class="py-1 text-right">Dozaj (mg/m³)</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody id="techRepTableBody" class="divide-y divide-slate-100">
                 <tr><td class="py-1">10:00 - 11:00</td><td>9.820</td><td>0.117</td><td>7</td><td class="text-right">12.0</td></tr>
                 <tr><td class="py-1">11:00 - 12:00</td><td>9.910</td><td>0.119</td><td>7</td><td class="text-right">12.1</td></tr>
                 <tr><td class="py-1">12:00 - 13:00</td><td>10.050</td><td>0.121</td><td>8</td><td class="text-right">12.0</td></tr>
@@ -2009,6 +2009,7 @@
       initCharts();
       startRealtimeTick();
       updateUI();
+      calculateCustomReport();
     });
 
     function showToast(msg, icon = 'ℹ️') {
@@ -2534,15 +2535,33 @@
       });
     }
 
+    function onDateInputChange() {
+      state.reports.currentFilter = 'custom';
+      document.getElementById('btnRepBugun').className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+      document.getElementById('btnRep7gun').className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+      document.getElementById('btnRep30gun').className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+    }
+
     function setReportFilterPreset(preset) {
       state.reports.currentFilter = preset;
+      const btnBugun = document.getElementById('btnRepBugun');
+      const btn7 = document.getElementById('btnRep7gun');
+      const btn30 = document.getElementById('btnRep30gun');
+
+      btnBugun.className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+      btn7.className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+      btn30.className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+
       if (preset === 'bugun') {
+        btnBugun.className = 'px-3 py-1 rounded-full text-[10px] font-bold bg-brand-amber text-slate-950 shadow';
         document.getElementById('repStartDate').value = '2026-09-08T00:00';
         document.getElementById('repEndDate').value = '2026-09-08T23:59';
       } else if (preset === '7gun') {
+        btn7.className = 'px-3 py-1 rounded-full text-[10px] font-bold bg-brand-amber text-slate-950 shadow';
         document.getElementById('repStartDate').value = '2026-09-01T00:00';
         document.getElementById('repEndDate').value = '2026-09-08T23:59';
       } else if (preset === '30gun') {
+        btn30.className = 'px-3 py-1 rounded-full text-[10px] font-bold bg-brand-amber text-slate-950 shadow';
         document.getElementById('repStartDate').value = '2026-08-09T00:00';
         document.getElementById('repEndDate').value = '2026-09-08T23:59';
       }
@@ -2550,11 +2569,173 @@
     }
 
     function calculateCustomReport() {
-      const start = document.getElementById('repStartDate').value.replace('T', ' ');
-      const end = document.getElementById('repEndDate').value.replace('T', ' ');
-      state.reports.range = `${start} - ${end}`;
-      document.getElementById('reportRangeLabel').innerText = state.reports.range;
-      showToast('Rapor seçili tarih ve saat aralığına göre güncellendi.', '📊');
+      const startVal = document.getElementById('repStartDate').value;
+      const endVal = document.getElementById('repEndDate').value;
+      if (!startVal || !endVal) return;
+
+      const dStart = new Date(startVal);
+      const dEnd = new Date(endVal);
+
+      let diffMs = dEnd - dStart;
+      if (isNaN(diffMs) || diffMs <= 0) {
+        showToast('Hatalı aralık: Bitiş zamanı başlangıçtan ileri olmalıdır!', '⚠️');
+        return;
+      }
+
+      const diffHours = Math.max(0.5, diffMs / (1000 * 3600));
+      const diffDays = diffHours / 24;
+
+      const pad = n => String(n).padStart(2, '0');
+      const fmt = d => `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      const fmtDateOnly = d => `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
+
+      const rangeStr = `${fmt(dStart)} - ${fmt(dEnd)}`;
+      state.reports.range = rangeStr;
+      document.getElementById('reportRangeLabel').innerText = rangeStr;
+
+      // Unset preset buttons if custom
+      if (state.reports.currentFilter === 'custom') {
+        document.getElementById('btnRepBugun').className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+        document.getElementById('btnRep7gun').className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+        document.getElementById('btnRep30gun').className = 'px-3 py-1 rounded-full text-[10px] font-semibold bg-brand-bg border border-brand-border text-slate-300';
+      }
+
+      // Calculations based on the requested interval:
+      const avgFlow = state.flowRate > 0 ? state.flowRate : 9850;
+      const totalGas = Math.round(diffHours * avgFlow);
+      
+      // Target odorant: concentration ~12.0 mg/m3 -> 0.000012 kg/m3
+      const totalConsumption = parseFloat(((totalGas * state.concentration) / 1000000).toFixed(3));
+      
+      // Average stroke dosage: 18.72 gr/stroke
+      const avgStrokeGr = 18.72;
+      const totalPeriodStrokes = Math.round((totalConsumption * 1000) / avgStrokeGr);
+
+      // Pump run hours and stroke distribution
+      const p1Hours = parseFloat((diffHours * 0.67).toFixed(1));
+      const p2Hours = parseFloat((diffHours * 0.33).toFixed(1));
+      const p1Strokes = Math.round(totalPeriodStrokes * 0.67);
+      const p2Strokes = totalPeriodStrokes - p1Strokes;
+
+      const pumpSwitches = Math.max(1, Math.round(diffDays * 0.58));
+      
+      // Tank delta (THT density ~1.0 kg/L)
+      const tankConsumedL = parseFloat(totalConsumption.toFixed(1));
+      const tankEndL = parseFloat(state.tankLevelLiters.toFixed(1));
+      const tankStartL = parseFloat((tankEndL + tankConsumedL).toFixed(1));
+
+      // Alarms scaled with period
+      const criticalAlarms = Math.max(0, Math.round(diffDays * 0.28));
+      const warningAlarms = Math.max(1, Math.round(diffDays * 0.57));
+      const totalAlarms = criticalAlarms + warningAlarms;
+      const alarmDuration = Math.round(diffDays * 22);
+
+      // Update State
+      state.reports.totalGas = totalGas;
+      state.reports.totalConsumption = totalConsumption;
+      state.reports.avgInj = avgStrokeGr;
+      state.reports.totalAlarm = totalAlarms;
+      state.reports.p1Hours = p1Hours;
+      state.reports.p2Hours = p2Hours;
+      state.reports.p1Strokes = p1Strokes;
+      state.reports.p2Strokes = p2Strokes;
+      state.reports.pumpSwitchCount = pumpSwitches;
+      state.reports.criticalAlarms = criticalAlarms;
+      state.reports.warningAlarms = warningAlarms;
+      state.reports.totalAlarmDuration = alarmDuration;
+      state.reports.tankStart = tankStartL;
+      state.reports.tankEnd = tankEndL;
+
+      // 1. UPDATE TAB REPORT UI
+      document.getElementById('repTotalGas').innerText = totalGas.toLocaleString('tr-TR');
+      document.getElementById('repTotalConsumption').innerText = totalConsumption.toFixed(3);
+      document.getElementById('repAvgInj').innerText = avgStrokeGr.toFixed(2);
+      document.getElementById('repTotalAlarm').innerText = totalAlarms;
+
+      document.getElementById('repP1Strokes').innerText = `${p1Strokes.toLocaleString('tr-TR')} Strok (${p1Hours} saat)`;
+      document.getElementById('repP2Strokes').innerText = `${p2Strokes.toLocaleString('tr-TR')} Strok (${p2Hours} saat)`;
+      document.getElementById('repTotalStrokes').innerText = `${totalPeriodStrokes.toLocaleString('tr-TR')} Strok`;
+      document.getElementById('repPumpSwitchCount').innerText = pumpSwitches;
+
+      document.getElementById('repTankStart').innerText = `${tankStartL} L`;
+      document.getElementById('repTankEnd').innerText = `${tankEndL} L`;
+      document.getElementById('repTankDelta').innerText = `-${tankConsumedL} L (Tüketilen)`;
+
+      document.getElementById('repCriticalAlarms').innerText = criticalAlarms;
+      document.getElementById('repWarningAlarms').innerText = warningAlarms;
+      document.getElementById('repTotalAlarmDuration').innerText = `${alarmDuration} dk`;
+
+      // 2. UPDATE MODAL EPDK
+      const epdkStation = document.getElementById('epdkStationName');
+      if (epdkStation) epdkStation.innerText = state.currentStation;
+      const epdkGas = document.getElementById('epdkTotalGas');
+      if (epdkGas) epdkGas.innerText = `${totalGas.toLocaleString('tr-TR')} m³`;
+      const epdkCons = document.getElementById('epdkTotalConsumption');
+      if (epdkCons) epdkCons.innerText = `${totalConsumption.toFixed(3)} kg`;
+      const epdkConc = document.getElementById('epdkAvgConc');
+      if (epdkConc) epdkConc.innerText = `${state.concentration.toFixed(2)} mg/m³`;
+      const epdkRange = document.getElementById('epdkRangeSpan');
+      if (epdkRange) epdkRange.innerText = rangeStr;
+      const epdkDate = document.getElementById('epdkDocDate');
+      if (epdkDate) epdkDate.innerText = fmtDateOnly(dEnd);
+
+      // 3. UPDATE MODAL TECHNICAL REPORT
+      const techStation = document.getElementById('techRepStation');
+      if (techStation) techStation.innerText = state.currentStation;
+      const techRange = document.getElementById('techRepRange');
+      if (techRange) techRange.innerText = rangeStr;
+      const techDate = document.getElementById('techRepDate');
+      if (techDate) techDate.innerText = fmt(dEnd);
+
+      const techP1 = document.getElementById('techRepP1Strokes');
+      if (techP1) techP1.innerText = `${p1Strokes.toLocaleString('tr-TR')} Strok (${p1Hours} s)`;
+      const techP2 = document.getElementById('techRepP2Strokes');
+      if (techP2) techP2.innerText = `${p2Strokes.toLocaleString('tr-TR')} Strok (${p2Hours} s)`;
+      const techTot = document.getElementById('techRepTotalStrokes');
+      if (techTot) techTot.innerText = `${totalPeriodStrokes.toLocaleString('tr-TR')} Strok`;
+
+      const techTStart = document.getElementById('techRepTankStart');
+      if (techTStart) techTStart.innerText = `${tankStartL} L`;
+      const techTEnd = document.getElementById('techRepTankEnd');
+      if (techTEnd) techTEnd.innerText = `${tankEndL} L`;
+      const techTDelta = document.getElementById('techRepTankDelta');
+      if (techTDelta) techTDelta.innerText = `-${tankConsumedL} L (Sarfiyat)`;
+
+      // 4. GENERATE DYNAMIC TABLE ROWS IN TECHNICAL REPORT
+      const tableBody = document.getElementById('techRepTableBody');
+      if (tableBody) {
+        let rowsHtml = '';
+        const rowCount = Math.min(8, Math.max(4, Math.round(diffHours <= 24 ? diffHours / 2 : diffDays)));
+        
+        for (let i = 0; i < rowCount; i++) {
+          let timeLabel = '';
+          if (diffHours <= 24) {
+            const hStart = pad(Math.floor((i * 24) / rowCount));
+            const hEnd = pad(Math.floor(((i + 1) * 24) / rowCount));
+            timeLabel = `${hStart}:00 - ${hEnd}:00`;
+          } else {
+            const rowDate = new Date(dStart.getTime() + (diffMs * (i / (rowCount - 1 || 1))));
+            timeLabel = fmtDateOnly(rowDate);
+          }
+          const rowGas = Math.round(totalGas / rowCount);
+          const rowCons = (totalConsumption / rowCount).toFixed(3);
+          const rowStrokes = Math.round(totalPeriodStrokes / rowCount);
+          const rowConc = (11.9 + (i % 3) * 0.1).toFixed(1);
+
+          rowsHtml += `
+            <tr class="${i === rowCount - 1 ? 'font-bold text-slate-900 bg-slate-50' : ''}">
+              <td class="py-1">${timeLabel}</td>
+              <td>${rowGas.toLocaleString('tr-TR')}</td>
+              <td>${rowCons}</td>
+              <td>${rowStrokes}</td>
+              <td class="text-right">${rowConc}</td>
+            </tr>
+          `;
+        }
+        tableBody.innerHTML = rowsHtml;
+      }
+
+      showToast(`Rapor hesaplandı: ${diffHours.toFixed(1)} saatlik dönem (${totalConsumption.toFixed(3)} kg sarfiyat)`, '📊');
     }
 
     function openNewMaintenanceModal() {
